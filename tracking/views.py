@@ -26,7 +26,7 @@ def manifest(request):
     # Public installation metadata only. No records, tokens or identity here.
     return JsonResponse({'id':'/', 'name':'CX83 Fit', 'short_name':'CX83 Fit',
         'start_url':'/', 'scope':'/', 'display':'standalone',
-        'background_color':'#16233C', 'theme_color':'#16233C', 'lang':'en-US'},
+        'background_color':'#171B3C', 'theme_color':'#171B3C', 'lang':'en-US'},
         content_type='application/manifest+json')
 
 

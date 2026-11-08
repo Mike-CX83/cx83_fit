@@ -1,5 +1,9 @@
 # Cursor continuation handoff
 
+## Pink and purple on navy, November 8, 2026, 4:41 AM CST
+
+Actions, the selected tab, plus marks, and progress bars use a purple-to-pink blend. The page ground is navy `#171B3C`. Calories left are pink. Yellow stays only on a flagged value. Published with the stylesheet cache `shell-10`.
+
 ## Lifted chrome and Holding Space confirmed live, November 8, 2026, 4:27 AM CST
 
 The lifted navy chrome, Electric Blue header mark, and Holding Space were already on `live.cx83labs.com` from the 4:21 AM publish. This pass copied the remaining More page icons and the install-screen color `#16233C`. Server commit `f3932ae`. App container `933f44f1a1eb` restarted at `2026-11-08T10:27:59Z`. Migration `0010` was already applied. No new migration. No text was sent. `SMS_ENABLED` stays unset. Shared proxy start remains `2026-10-10T17:40:21Z`. Public login shows `shell-8` and `symbol-light.svg`. The manifest theme is `#16233C`. Anonymous `/holding/` returns 302. Anonymous `/mcp` returns 401.

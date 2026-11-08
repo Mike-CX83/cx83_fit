@@ -17,19 +17,18 @@ Match the CX83 Labs site dark treatment for daily use. Midnight ground, silver t
 
 | Role | Value |
 | :--- | :--- |
-| Page | Lifted midnight `#243864` |
-| Cards / surfaces | `#2C4678` |
-| Raised surface | `#385688` |
-| Ink | Silver `#F4F7FC` |
-| Muted text | `#C5D2E8` |
-| Border | `#4A5C82` |
-| Action buttons | Electric Blue `#2F74FF` |
-| Action hover | `#1B5FE0` |
-| Links / kickers | `#B6EAFF` |
-| Focus / accent | Violet `#8B5CF6` |
-| Flare | Amber `#F6B230` (deep `#E08912`) |
+| Page | Navy `#171B3C` |
+| Cards / surfaces | `#232652` |
+| Raised surface | `#31366C` |
+| Ink | Silver `#F8F4FC` |
+| Muted text | `#DDD0EE` |
+| Border | `#6E6296` |
+| Actions | Purple to pink `#7C5CFF` to `#F472D0` |
+| Links | Pink `#F6B4EE` |
+| Focus / accent | Violet `#A78BFA` |
+| Flare | Amber `#F6B230` only for a flagged value |
 
-Selected navigation uses Electric Blue. Amber is remaining calories and near-goal emphasis. Purple marks protein. Yellow marks a value that needs a look. Do not spread amber across every control.
+Selected tabs, buttons, and plus marks use the purple-to-pink blend. The ground stays navy. Yellow is only a value that needs a look.
 
 Small header mark: `symbol-showcase.svg`, the existing blue-to-purple frame. The flat Electric Blue `symbol-light.svg` reads darker and less like the usual mark at this size.  
 Footer wordmark: `logo-dark.svg`.
