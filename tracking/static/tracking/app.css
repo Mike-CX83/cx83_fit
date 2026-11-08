@@ -81,8 +81,7 @@ details.fold[open]>summary::before{transform:rotate(90deg)}
 
 .chip-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 18px;align-items:stretch}
 .metric-chip{display:flex;flex-direction:column;padding:14px 12px 12px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow);min-width:0;min-height:108px}
-.metric-chip.is-protein{border-color:rgb(130 71 245 / 50%);background:linear-gradient(180deg,rgb(130 71 245 / 14%),var(--surface) 46%)}
-.metric-chip.is-protein .chip-label{color:#d8c4ff}
+.metric-chip.is-protein{border-color:rgb(139 92 246 / 45%)}
 .metric-chip.is-attention{border-color:rgb(245 197 66 / 70%)}
 .chip-label{margin:0 0 8px;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--muted)}
 .chip-value{margin:0;font-size:1.1rem;font-weight:700;letter-spacing:-.02em;line-height:1.2}
@@ -93,7 +92,7 @@ details.fold[open]>summary::before{transform:rotate(90deg)}
 .goal-bar{margin-top:12px;height:8px;border-radius:999px;background:#3A4E78;overflow:hidden}
 .goal-bar.thin{margin-top:0;height:4px}
 .goal-bar>span{display:block;height:100%;border-radius:inherit;background:var(--accent);max-width:100%}
-.goal-bar.protein>span{background:linear-gradient(90deg,var(--purple),var(--pink))}
+.goal-bar.protein>span{background:var(--purple)}
 .goal-bar.attention>span{background:var(--yellow)}
 .goal-bar.flare>span{background:linear-gradient(90deg,var(--flare),var(--flare-deep))}
 
