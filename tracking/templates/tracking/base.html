@@ -12,7 +12,7 @@
   <a href="{% url 'diary' %}" {% if request.resolver_match.url_name == 'diary' %}class="is-active"{% endif %}>Diary</a>
   <a href="{% url 'plan' %}" {% if request.resolver_match.url_name == 'plan' %}class="is-active"{% endif %}>Plan</a>
   <a href="{% url 'progress' %}" {% if request.resolver_match.url_name == 'progress' or request.resolver_match.url_name == 'trends' or request.resolver_match.url_name == 'photo_gallery' or request.resolver_match.url_name == 'photo_upload' or request.resolver_match.url_name == 'photo_compare' or request.resolver_match.url_name == 'photo_detail' or request.resolver_match.url_name == 'measurement_new' or request.resolver_match.url_name == 'measurement_import' or request.resolver_match.url_name == 'measurement_history' or request.resolver_match.url_name == 'measurement_edit' %}class="is-active"{% endif %}>Progress</a>
-  <a href="{% url 'more' %}" {% if request.resolver_match.url_name == 'more' or request.resolver_match.url_name == 'journal' or request.resolver_match.url_name == 'journal_detail' or request.resolver_match.url_name == 'reviews' or request.resolver_match.url_name == 'summary_list' or request.resolver_match.url_name == 'export' or request.resolver_match.url_name == 'connections' or request.resolver_match.url_name == 'oura' or request.resolver_match.url_name == 'nutrition_targets' or request.resolver_match.url_name == 'summary_import' %}class="is-active"{% endif %}>More</a>
+  <a href="{% url 'more' %}" {% if request.resolver_match.url_name == 'more' or request.resolver_match.url_name == 'journal' or request.resolver_match.url_name == 'journal_detail' or request.resolver_match.url_name == 'reviews' or request.resolver_match.url_name == 'summary_list' or request.resolver_match.url_name == 'export' or request.resolver_match.url_name == 'connections' or request.resolver_match.url_name == 'oura' or request.resolver_match.url_name == 'nutrition_targets' or request.resolver_match.url_name == 'summary_import' or request.resolver_match.url_name == 'clinical' %}class="is-active"{% endif %}>More</a>
 </nav>
 {% endif %}
 {% block content %}{% endblock %}
@@ -22,7 +22,7 @@
   <a href="/" {% if request.resolver_match.url_name == 'overview' %}class="is-active"{% endif %}>Today</a>
   <a href="{% url 'diary' %}" {% if request.resolver_match.url_name == 'diary' %}class="is-active"{% endif %}>Diary</a>
   <a href="{% url 'progress' %}" {% if request.resolver_match.url_name == 'progress' or request.resolver_match.url_name == 'trends' or request.resolver_match.url_name == 'photo_gallery' or request.resolver_match.url_name == 'measurement_new' %}class="is-active"{% endif %}>Progress</a>
-  <a href="{% url 'more' %}" {% if request.resolver_match.url_name == 'more' or request.resolver_match.url_name == 'journal' or request.resolver_match.url_name == 'plan' or request.resolver_match.url_name == 'export' or request.resolver_match.url_name == 'connections' or request.resolver_match.url_name == 'oura' %}class="is-active"{% endif %}>More</a>
+  <a href="{% url 'more' %}" {% if request.resolver_match.url_name == 'more' or request.resolver_match.url_name == 'journal' or request.resolver_match.url_name == 'plan' or request.resolver_match.url_name == 'export' or request.resolver_match.url_name == 'connections' or request.resolver_match.url_name == 'oura' or request.resolver_match.url_name == 'clinical' %}class="is-active"{% endif %}>More</a>
 </nav>
 {% endif %}
 <footer>

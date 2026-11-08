@@ -44,6 +44,7 @@
 </div>
 
 <p class="checkin-line">{% if metrics.checkin %}Check-in saved{% else %}No check-in yet{% endif %}</p>
+<p class="checkin-line"><a href="{% url 'clinical' %}">Labs, meds, diagnoses</a></p>
 <div class="meal-board">
 {% for section in metrics.meal_sections %}
 <section class="meal-block">

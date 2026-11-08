@@ -73,7 +73,7 @@ def listing(request, kind):
     target_values = [{'label': label, 'unit': unit, 'value': target.values.get(key) if target else None}
                      for key, label, unit in SCHEMAS['nutrition']] if kind == 'nutrition' else []
     return render(request, 'tracking/summaries.html', {
-        'kind': kind, 'title': dict(SummaryRecord.KINDS)[kind], 'page': page,
+        'kind': kind, 'title': 'Lab results' if kind == 'health' else dict(SummaryRecord.KINDS)[kind], 'page': page,
         'entries': [{'record': record, 'fields': display_values(record)} for record in page],
         'synthetic': request.GET.get('synthetic') == '1', 'weekly': weekly,
         'week_start': start, 'week_end': today, 'target_values': target_values,

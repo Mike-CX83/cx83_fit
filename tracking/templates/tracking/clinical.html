@@ -1,0 +1,43 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<h1 class="page-title">Labs, meds, diagnoses</h1>
+<p class="quiet">Current list. Blank detail stays blank. <a href="{% url 'summary_list' 'health' %}">Lab results with units</a></p>
+{% if error %}<p class="notice">{{ error }}</p>{% endif %}
+
+<section class="panel">
+  <h2>Labs</h2>
+  {% for item in items.labs %}
+  <article class="meal-row">
+    <div><strong>{{ item.name }}</strong>{% if item.detail %}<p>{{ item.detail }}</p>{% endif %}<p>{{ item.recorded_on }}</p></div>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="stop"><input type="hidden" name="item_id" value="{{ item.id }}"><input type="hidden" name="request_id" value="{{ item.stop_request_id }}"><button class="text-button" type="submit">Not current</button></form>
+  </article>
+  {% empty %}<p>No labs on file.</p>{% endfor %}
+</section>
+<section class="panel">
+  <h2>Medications</h2>
+  {% for item in items.medications %}
+  <article class="meal-row">
+    <div><strong>{{ item.name }}</strong>{% if item.detail %}<p>{{ item.detail }}</p>{% endif %}<p>{{ item.recorded_on }}</p></div>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="stop"><input type="hidden" name="item_id" value="{{ item.id }}"><input type="hidden" name="request_id" value="{{ item.stop_request_id }}"><button class="text-button" type="submit">Not current</button></form>
+  </article>
+  {% empty %}<p>No medications on file.</p>{% endfor %}
+</section>
+<section class="panel">
+  <h2>Diagnoses</h2>
+  {% for item in items.diagnoses %}
+  <article class="meal-row">
+    <div><strong>{{ item.name }}</strong>{% if item.detail %}<p>{{ item.detail }}</p>{% endif %}<p>{{ item.recorded_on }}</p></div>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="stop"><input type="hidden" name="item_id" value="{{ item.id }}"><input type="hidden" name="request_id" value="{{ item.stop_request_id }}"><button class="text-button" type="submit">Not current</button></form>
+  </article>
+  {% empty %}<p>No diagnoses on file.</p>{% endfor %}
+</section>
+
+<form method="post" class="stack-form">{% csrf_token %}
+  <input type="hidden" name="action" value="save">
+  <input type="hidden" name="request_id" value="{{ request_id }}">
+  <label>Type <select name="kind"><option value="lab">Lab</option><option value="medication">Medication</option><option value="diagnosis">Diagnosis</option></select></label>
+  <label>Name <input name="name" maxlength="120" required></label>
+  <label>Result, dose, or note <input name="detail" maxlength="500"></label>
+  <label>Recorded on <input name="recorded_on" type="date" value="{{ today }}" required></label>
+  <button>Save</button>
+</form>
+{% endblock %}

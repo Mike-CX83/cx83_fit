@@ -12,6 +12,7 @@ from tracking import public_views
 from tracking import plan_views
 from tracking import diary_views
 from tracking import journal_views
+from tracking import clinical_views
 
 urlpatterns = [
     path('privacy/', public_views.privacy, name='privacy'),
@@ -33,6 +34,7 @@ urlpatterns = [
     path('', views.overview, name='overview'),
     path('diary/', diary_views.page, name='diary'),
     path('plan/', plan_views.page, name='plan'),
+    path('records/', clinical_views.page, name='clinical'),
     path('progress/', views.progress, name='progress'),
     path('more/', views.more, name='more'),
     path('export/', exports.download, name='export'),

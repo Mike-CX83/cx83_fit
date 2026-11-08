@@ -35,16 +35,7 @@
     <p><a href="{{ line.href }}">Open the {{ line.title|lower }} chart</a></p>
   {% endfor %}
 </section>
-<section class="panel"><h2>Current labs, medications, and diagnoses</h2>
-  <h3>Labs</h3>{% for item in plan.clinical.labs %}<p>{{ item.name }}: {{ item.detail }} · {{ item.recorded_on }} <button form="stop-{{ item.id }}">Replace by stopping this result</button></p><form id="stop-{{ item.id }}" method="post">{% csrf_token %}<input type="hidden" name="action" value="stop"><input type="hidden" name="item_id" value="{{ item.id }}"></form>{% empty %}<p>No current lab on file.</p>{% endfor %}
-  <h3>Medications</h3>{% for item in plan.clinical.medications %}<p>{{ item.name }}{% if item.detail %} · {{ item.detail }}{% endif %} · {{ item.recorded_on }} <button form="stop-{{ item.id }}">Mark stopped</button></p><form id="stop-{{ item.id }}" method="post">{% csrf_token %}<input type="hidden" name="action" value="stop"><input type="hidden" name="item_id" value="{{ item.id }}"></form>{% empty %}<p>No current medication on file.</p>{% endfor %}
-  <h3>Diagnoses</h3>{% for item in plan.clinical.diagnoses %}<p>{{ item.name }}{% if item.detail %} · {{ item.detail }}{% endif %} · {{ item.recorded_on }} <button form="stop-{{ item.id }}">Mark no longer current</button></p><form id="stop-{{ item.id }}" method="post">{% csrf_token %}<input type="hidden" name="action" value="stop"><input type="hidden" name="item_id" value="{{ item.id }}"></form>{% empty %}<p>No current diagnosis on file.</p>{% endfor %}
-  <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="clinical">
-    <label>Type <select name="kind"><option value="lab">Lab</option><option value="medication">Medication</option><option value="diagnosis">Diagnosis</option></select></label>
-    <label>Name <input name="name" maxlength="120" required></label>
-    <label>Result, dose, or note <input name="detail" maxlength="500"></label>
-    <label>Recorded on <input name="recorded_on" type="date" value="{{ plan.end }}" required></label>
-    <button>Save current item</button>
-  </form>
+<section class="panel"><h2>Labs, meds, and diagnoses</h2>
+  <p><a href="{% url 'clinical' %}">Open the current list</a></p>
 </section>
 {% endblock %}

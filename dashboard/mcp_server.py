@@ -274,6 +274,22 @@ def _watch_signals(local_date, include_synthetic):
     return watch_signals(_owner(), local_date, include_synthetic=include_synthetic)
 
 
+def _clinical_items(include_synthetic):
+    from tracking.clinical import current_items
+    return current_items(_owner(), include_synthetic=include_synthetic)
+
+
+def _save_clinical(kind, name, detail, recorded_on, request_id, synthetic):
+    from tracking.clinical import save_clinical
+    return save_clinical(
+        _owner(), kind, name, detail, recorded_on, request_id, synthetic=synthetic)
+
+
+def _stop_clinical(item_id, request_id):
+    from tracking.clinical import stop_clinical
+    return stop_clinical(_owner(), item_id, request_id)
+
+
 def _save_review(text, local_date, request_id, synthetic, record_kind, record_id):
     from tracking.reviews import save_review
     return save_review(_owner(), text, local_date, request_id, synthetic, record_kind, record_id, source_system='mcp')
@@ -360,7 +376,7 @@ def create_mcp_app(config: MCPConfig, *, verifier=None):
         A single observation is not a trend. Missing days are unknown, not zero.
         Food calories stay separate from calories burned. Common meals are foods
         recorded at least twice. Current labs, medications, and diagnoses are included
-        even when older than 90 days.
+        even when older than 90 days. Use read_clinical_items when that list is the question.
         """
         _require_scope('health:read', config)
         from tracking.plan import fitness_plan
@@ -604,6 +620,53 @@ def create_mcp_app(config: MCPConfig, *, verifier=None):
         """
         _require_scope("health:read", config)
         return await sync_to_async(_watch_signals, thread_sensitive=True)(local_date.isoformat(), include_synthetic)
+
+    @server.tool(annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
+        meta={"securitySchemes": [{"type": "oauth2", "scopes": ["health:read"]}]})
+    async def read_clinical_items(include_synthetic: bool = False) -> dict:
+        """Read current labs, medications, and diagnoses.
+
+        Older items stay in this list while they are current. An empty list means nothing is on file.
+        This does not interpret a result or infer a diagnosis.
+        """
+        _require_scope("health:read", config)
+        return await sync_to_async(_clinical_items, thread_sensitive=True)(include_synthetic)
+
+    @server.tool(annotations=ToolAnnotations(read_only_hint=False, destructive_hint=False,
+            idempotent_hint=True, open_world_hint=False),
+        meta={"securitySchemes": [{"type": "oauth2", "scopes": ["health:read"]}]})
+    async def save_clinical_item(
+        kind: Literal["lab", "medication", "diagnosis"],
+        name: Annotated[str, Field(min_length=1, max_length=120)],
+        recorded_on: date,
+        request_id: UUID,
+        explicitly_authorized: bool,
+        detail: Annotated[str, Field(max_length=500)] = "",
+        synthetic: bool = False,
+    ) -> dict:
+        """Save one current lab, medication, or diagnosis after the user asks to keep it.
+
+        A new lab with the same name replaces the current result and keeps the older row.
+        A blank detail stays blank. Reuse request_id to replay the same save.
+        """
+        _require_scope("health:read", config)
+        if not explicitly_authorized:
+            raise PermissionError("Explicit user authorization is required to save this item.")
+        return await sync_to_async(_save_clinical, thread_sensitive=True)(
+            kind, name, detail, recorded_on.isoformat(), str(request_id), synthetic)
+
+    @server.tool(annotations=ToolAnnotations(read_only_hint=False, destructive_hint=False,
+            idempotent_hint=True, open_world_hint=False),
+        meta={"securitySchemes": [{"type": "oauth2", "scopes": ["health:read"]}]})
+    async def stop_clinical_item(item_id: UUID, request_id: UUID, explicitly_authorized: bool) -> dict:
+        """Mark one current lab, medication, or diagnosis as no longer current.
+
+        The row remains in the record. Do this only after the user asks.
+        """
+        _require_scope("health:read", config)
+        if not explicitly_authorized:
+            raise PermissionError("Explicit user authorization is required to update this item.")
+        return await sync_to_async(_stop_clinical, thread_sensitive=True)(str(item_id), str(request_id))
 
     # Omit measurement and review writes unless the deployment operator has opted in.
     if config.writes_enabled:
