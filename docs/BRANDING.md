@@ -11,20 +11,24 @@ Host: `live.cx83labs.com` (unchanged)
 - The home-screen / favicon mark is the frame alone.
 - Assets live under `tracking/static/tracking/brand/` with provenance in that folder.
 
-## Light app palette
+## Dark app palette
 
-The public site can use Midnight heroes. This private app stays light for daily use.
+Match the CX83 Labs site dark treatment for daily use. Midnight ground, silver type, Electric Blue actions.
 
 | Role | Value |
 | :--- | :--- |
-| Page | `#F5F7FF` |
-| Cards | `#FFFFFF` |
-| Ink | Midnight `#080E22` |
-| Muted text | `#515D76` |
-| Border | `#D4DCEF` |
-| Action / links | Electric Blue `#246BFF` |
+| Page | Midnight `#080E22` |
+| Cards / surfaces | `#101A33` |
+| Raised surface | `#1B2945` |
+| Ink | Silver `#E6EBF5` |
+| Muted text | `#A4B6D3` |
+| Border | `#33405D` |
+| Action buttons | Electric Blue `#246BFF` |
 | Action hover | `#174ED4` |
+| Links / kickers | `#B6EAFF` |
 | Focus / accent | Violet `#8247F5` |
-| Theme / footer strip | Midnight `#080E22` |
+
+Header mark: `symbol-showcase.svg` on dark chrome.  
+Footer wordmark: `logo-dark.svg`.
 
 Working interface face: Geist Sans when available, with system UI as fallback. Logo lettering remains artwork, not a webfont.
