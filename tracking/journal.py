@@ -12,7 +12,7 @@ from django.db import IntegrityError, OperationalError, transaction
 from django.utils import timezone
 from .domain import InvalidMeasurement, parse_day, request_uuid
 from .governing import governing_status
-from .journal_registry import PROTOCOL_VERSION, validate_observation
+from .journal_registry import PROTOCOL_VERSION, REGISTRY_VERSION, validate_observation
 from .models import JournalCorrection, JournalEntry, JournalObservation, WriteRequest
 from .services import Conflict, RecordNotFound, _owner, _replay
 
@@ -102,8 +102,8 @@ def save_journal(owner, body, local_date, request_id, observation=None, *, sourc
                  expected_observation_version=None, channel='dashboard'):
     """Create or correct one owned entry. The same request id and payload replays."""
     _owner(owner)
-    if channel != 'dashboard':
-        raise PermissionError('Journal saving is enabled for the dashboard only.')
+    if channel not in {'dashboard', 'mcp'}:
+        raise PermissionError('Journal saving is enabled for the dashboard and the authorized ChatGPT connection.')
     if type(synthetic) is not bool:
         raise InvalidMeasurement('synthetic must be true or false.')
     request_id = request_uuid(request_id)
@@ -256,6 +256,124 @@ def delete_journal(owner, record_id, expected_version, request_id, expected_obse
             return {'id': str(entry.id), 'deleted': True}
     except (IntegrityError, OperationalError):
         raise Conflict('Storage is busy. Retry the same deletion request.') from None
+
+
+_PROPOSAL_FIELDS = {'domain_id', 'metric_key', 'value_state', 'narrative', 'boolean', 'subject', 'support_span', 'temporal_scope'}
+_TEMPORAL = {'completed', 'intention', 'unspecified'}
+
+
+def _proposal_result(index, status, reason, proposal, observation=None):
+    item = {'index': index, 'status': status, 'reason': reason, 'subject': proposal.get('subject', 'self')}
+    if observation is not None:
+        item.update(observation)
+    span = proposal.get('support_span')
+    if isinstance(span, str):
+        item['support_span'] = span.strip()
+    temporal = proposal.get('temporal_scope', 'unspecified')
+    if isinstance(temporal, str):
+        item['temporal_scope'] = temporal
+    return item
+
+
+def _review_proposal(body, proposal, index):
+    """Check one client proposal. This does not infer a fact from the wording."""
+    if not isinstance(proposal, dict):
+        return _proposal_result(index, 'rejected', 'A proposal must be an object.', {'subject': 'self'})
+    if set(proposal) - _PROPOSAL_FIELDS:
+        return _proposal_result(index, 'rejected', 'Unsupported proposal fields.', proposal)
+    subject = proposal.get('subject', 'self')
+    if subject != 'self':
+        return _proposal_result(index, 'rejected', 'This proposal is about someone else, so it was not saved as your observation.', proposal)
+    span = proposal.get('support_span', '')
+    if not isinstance(span, str) or len(span) > 500:
+        return _proposal_result(index, 'rejected', 'The supporting words must be text of at most 500 characters.', proposal)
+    span = span.strip()
+    if not span:
+        return _proposal_result(index, 'ambiguity', 'A proposal needs the exact words it relies on.', proposal)
+    if span not in body:
+        return _proposal_result(index, 'rejected', 'Those words are not in the entry.', proposal)
+    temporal = proposal.get('temporal_scope', 'unspecified')
+    if temporal not in _TEMPORAL:
+        return _proposal_result(index, 'rejected', 'Use completed, intention, or unspecified for the timing.', proposal)
+    state = proposal.get('value_state')
+    if temporal == 'intention' and state == 'observed':
+        return _proposal_result(index, 'rejected', 'An intention is not a completed yes or no.', proposal)
+    if temporal == 'completed' and state == 'intention':
+        return _proposal_result(index, 'rejected', 'A completed choice cannot be stored as only an intention.', proposal)
+    if state == 'intention' and temporal == 'unspecified':
+        return _proposal_result(index, 'ambiguity', 'Say whether this is a plan or a completed choice.', proposal)
+    try:
+        fields = {key: proposal[key] for key in ('domain_id', 'metric_key', 'value_state', 'narrative', 'boolean') if key in proposal}
+        if 'subject' in proposal:
+            fields['subject'] = proposal['subject']
+        observation = validate_observation(fields)
+    except InvalidMeasurement as exc:
+        return _proposal_result(index, 'rejected', str(exc), proposal)
+    if observation['narrative'] and observation['narrative'] not in body:
+        return _proposal_result(index, 'rejected', 'The note uses words that are not in the entry.', proposal)
+    return _proposal_result(index, 'accepted', '', proposal, observation)
+
+
+def preview_journal_extraction(body, proposals):
+    """Validate proposed observations. The database is not changed."""
+    clean = _body(body)
+    if not isinstance(proposals, list) or len(proposals) > 14:
+        raise InvalidMeasurement('Send at most 14 observation proposals.')
+    accepted, ambiguities, rejected = [], [], []
+    for index, proposal in enumerate(proposals):
+        item = _review_proposal(clean, proposal, index)
+        {'accepted': accepted, 'ambiguity': ambiguities, 'rejected': rejected}[item.pop('status')].append(item)
+    grouped = {}
+    for item in accepted:
+        grouped.setdefault((item['domain_id'], item['metric_key']), []).append(item)
+    conflicted = []
+    for items in grouped.values():
+        signatures = {(item['value_state'], json.dumps(item.get('value_json'), sort_keys=True), item.get('narrative', '')) for item in items}
+        if len(signatures) > 1:
+            conflicted.extend(items)
+    if conflicted:
+        conflict_ids = {item['index'] for item in conflicted}
+        accepted = [item for item in accepted if item['index'] not in conflict_ids]
+        for item in conflicted:
+            ambiguities.append({**item, 'reason': 'These proposals disagree. None was chosen.'})
+    return {
+        'persisted': False, 'protocol_version': PROTOCOL_VERSION, 'registry_version': REGISTRY_VERSION,
+        'body_sha256': hashlib.sha256(clean.encode()).hexdigest(), 'accepted': accepted,
+        'ambiguities': ambiguities, 'rejected': rejected, 'silence_is_unknown': not proposals,
+    }
+
+
+def list_journal(owner, start, end, include_synthetic=False, limit=20, offset=0):
+    """Return owned journal text for an authorized client. Deleted text is absent."""
+    from .domain import bounded_range
+    _owner(owner)
+    first, last = bounded_range(start, end)
+    if type(include_synthetic) is not bool:
+        raise InvalidMeasurement('include_synthetic must be true or false.')
+    if type(limit) is not int or not 1 <= limit <= 50 or type(offset) is not int or not 0 <= offset <= 100000:
+        raise InvalidMeasurement('Use limit 1 to 50 and offset 0 to 100000.')
+    query = JournalEntry.objects.filter(owner=owner, deleted_at__isnull=True, local_date__range=(first, last))
+    if not include_synthetic:
+        query = query.filter(synthetic=False)
+    count = query.count()
+    items = []
+    rows = query.prefetch_related('observations').order_by('-local_date', '-captured_at', 'id')[offset:offset + limit]
+    for entry in rows:
+        observations = [{
+            'id': str(obs.id), 'domain_id': obs.domain_id, 'metric_key': obs.metric_key,
+            'value_state': obs.value_state, 'value_type': obs.value_type, 'value_json': obs.value_json,
+            'narrative': obs.narrative, 'subject': obs.subject, 'version': obs.version,
+        } for obs in entry.observations.all() if obs.deleted_at is None]
+        items.append({
+            'id': str(entry.id), 'local_date': entry.local_date.isoformat(),
+            'occurred_at': entry.occurred_at.isoformat() if entry.occurred_at else None,
+            'time_precision': entry.time_precision, 'source_timezone': entry.source_timezone,
+            'captured_at': entry.captured_at.isoformat(), 'body': entry.body, 'channel': entry.channel,
+            'synthetic': entry.synthetic, 'version': entry.version, 'observations': observations,
+        })
+    return {'items': items, 'count': count, 'returned': len(items),
+            'next_offset': offset + limit if offset + limit < count else None,
+            'includes_synthetic': include_synthetic}
 
 
 def governing_line():

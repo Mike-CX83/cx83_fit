@@ -1,11 +1,12 @@
 """Owner journal pages. Writes go through the journal service, never raw model edits."""
+import json
 from uuid import uuid4
-from django.http import Http404, HttpResponseBadRequest
+from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from .domain import InvalidMeasurement
-from .journal import delete_journal, governing_line, save_journal
+from .journal import delete_journal, governing_line, preview_journal_extraction, save_journal
 from .journal_registry import DOMAINS, METRICS, STATES
 from .models import JournalEntry
 from .services import Conflict, RecordNotFound
@@ -38,6 +39,17 @@ def _observation(post):
             'boolean': _boolean(post.get('boolean')), 'subject': 'self'}
 
 
+def _proposals(post):
+    """One dashboard proposal. A check writes nothing. Saving uses the explicit fields."""
+    if not post.get('domain_id') and not post.get('metric_key') and not post.get('value_state') and not post.get('support_span'):
+        return []
+    proposal = _observation(post) or {}
+    proposal['support_span'] = post.get('support_span', '')
+    proposal['temporal_scope'] = post.get('temporal_scope') or 'unspecified'
+    proposal['subject'] = 'self'
+    return [proposal]
+
+
 def _version(value, label):
     if value in (None, ''):
         return None
@@ -51,7 +63,7 @@ def _version(value, label):
 
 
 def _context(request, **extra):
-    return {'domains': DOMAINS.items(), 'metrics': METRICS.items(), 'states': sorted(STATES),
+    return {'domains': DOMAINS.items(), 'metrics': METRICS.items(), 'states': sorted(STATES | {'intention'}),
             'governing_line': governing_line(), 'synthetic': _flag(request),
             'request_id': request.POST.get('request_id') or str(uuid4()), **extra}
 
@@ -67,6 +79,18 @@ def page(request):
     error, status = '', 200
     if request.method == 'POST':
         synthetic = request.POST.get('synthetic') == 'on'
+        if 'check_proposal' in request.POST:
+            try:
+                preview = preview_journal_extraction(request.POST.get('body', ''), _proposals(request.POST))
+            except InvalidMeasurement as exc:
+                error, status, preview = str(exc), 400, None
+            else:
+                error, status = '', 200
+            query = JournalEntry.objects.filter(owner=request.user, deleted_at__isnull=True).prefetch_related('observations')
+            if not synthetic:
+                query = query.filter(synthetic=False)
+            return render(request, 'tracking/journal.html', _context(
+                request, entries=query[:50], error=error, posted=request.POST, preview=preview), status=status)
         try:
             result = save_journal(
                 request.user, request.POST.get('body', ''), request.POST.get('local_date', ''),
@@ -86,6 +110,23 @@ def page(request):
         query = query.filter(synthetic=False)
     return render(request, 'tracking/journal.html', _context(
         request, entries=query[:50], error=error, posted=request.POST), status=status)
+
+
+@owner_only
+@require_http_methods(['POST'])
+def preview(request):
+    """Validate a client's proposed observations. This endpoint writes nothing."""
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except (UnicodeError, json.JSONDecodeError):
+        return JsonResponse({'persisted': False, 'error': 'Send a JSON object.'}, status=400)
+    if not isinstance(payload, dict):
+        return JsonResponse({'persisted': False, 'error': 'Send a JSON object.'}, status=400)
+    try:
+        result = preview_journal_extraction(payload.get('body', ''), payload.get('proposals', []))
+    except InvalidMeasurement as exc:
+        return JsonResponse({'persisted': False, 'error': str(exc)}, status=400)
+    return JsonResponse(result)
 
 
 @owner_only

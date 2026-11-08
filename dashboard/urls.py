@@ -34,6 +34,7 @@ urlpatterns = [
     path('export/', exports.download, name='export'),
     path('trends/', trends.page, name='trends'),
     path('journal/', journal_views.page, name='journal'),
+    path('journal/preview/', journal_views.preview, name='journal_preview'),
     path('journal/<uuid:entry_id>/', journal_views.detail, name='journal_detail'),
     path('journal/<uuid:entry_id>/delete/', journal_views.remove, name='journal_delete'),
     path('reviews/', reviews.page, name='reviews'),

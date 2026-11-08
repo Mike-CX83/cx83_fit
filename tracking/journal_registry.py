@@ -32,7 +32,7 @@ METRICS = {
         'label': 'Explicit yes or no',
         'type': 'boolean',
         'domains': frozenset(DOMAINS),
-        'states': STATES,
+        'states': STATES | {'intention'},
     },
 }
 

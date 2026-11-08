@@ -1,8 +1,13 @@
 {% extends 'tracking/base.html' %}{% block content %}
 <p class="eyebrow">Journal</p><h1>Journal</h1>
-<p>Save the words you want to keep, and one explicit observation when you have one. Unknown stays unknown. This page does not score the entry or send it to another service.</p>
+<p>Save the words you want to keep, and one explicit observation when you have one. Check a proposal first when a client suggests it. The check writes nothing. Unknown stays unknown. This page does not score the entry.</p>
 <p>{{ governing_line }}</p>
 {% if error %}<p class="notice">{{ error }}</p>{% endif %}
+{% if preview %}<section class="panel"><h2>Proposal check</h2><p>Nothing was saved.</p>
+{% for item in preview.accepted %}<p>Ready to save: domain {{ item.domain_id }}, {{ item.metric_key }}, {{ item.value_state }}{% if item.metric_key == 'explicit_choice' and item.value_state == 'observed' and not item.value_json.boolean %}, no{% endif %}{% if item.value_json.boolean %}, yes{% endif %}{% if item.narrative %}. {{ item.narrative }}{% endif %}</p>{% empty %}{% if preview.silence_is_unknown %}<p>Nothing was proposed. Silence stays unknown.</p>{% endif %}{% endfor %}
+{% for item in preview.ambiguities %}<p>Needs a decision: {{ item.reason }}</p>{% endfor %}
+{% for item in preview.rejected %}<p>Not saved: {{ item.reason }}</p>{% endfor %}
+</section>{% endif %}
 {% if synthetic %}<p class="notice">Synthetic entries are included.</p>{% endif %}
 <section class="panel"><h2>New entry</h2>
 <form method="post">{% csrf_token %}
@@ -16,7 +21,10 @@
 <p><label>State <select name="value_state"><option value="">None</option>{% for state in states %}<option value="{{ state }}"{% if posted.value_state == state %} selected{% endif %}>{{ state }}</option>{% endfor %}</select></label></p>
 <p><label>Note <textarea name="narrative" maxlength="2000">{{ posted.narrative|default:'' }}</textarea></label></p>
 <p><label>Yes or no <select name="boolean"><option value="">Blank</option><option value="true"{% if posted.boolean == 'true' %} selected{% endif %}>Yes</option><option value="false"{% if posted.boolean == 'false' %} selected{% endif %}>No</option></select></label></p>
+<p><label>Exact words the proposal relies on <input name="support_span" value="{{ posted.support_span|default:'' }}" maxlength="500"></label></p>
+<p><label>Timing <select name="temporal_scope"><option value="unspecified">Unspecified</option><option value="completed"{% if posted.temporal_scope == 'completed' %} selected{% endif %}>Completed</option><option value="intention"{% if posted.temporal_scope == 'intention' %} selected{% endif %}>Intention</option></select></label></p>
 <p><label><input type="checkbox" name="synthetic" value="on"> Synthetic test entry</label></p>
+<button name="check_proposal" value="yes">Check proposal</button>
 <button>Save journal entry</button></form></section>
 <nav><a href="{% url 'journal' %}">Personal entries</a><a href="?synthetic=1">Include synthetic tests</a></nav>
 <section class="panel"><h2>Saved entries</h2>
