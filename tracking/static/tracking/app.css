@@ -36,6 +36,16 @@ a:hover{color:var(--silver)}
 .date-nav:hover{color:var(--flare);border-color:var(--flare)}
 .date-nav.is-disabled{opacity:.35;pointer-events:none}
 
+.headroom{padding:22px 20px 18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow);margin:0 0 16px}
+.headroom.is-low{border-color:rgb(245 158 11 / 55%)}
+.headroom.is-stretched{border-color:rgb(245 197 66 / 45%)}
+.headroom-grid{display:grid;gap:16px}
+.headroom-status{font-size:clamp(1.05rem,3vw,1.25rem);font-weight:700;letter-spacing:-.02em;color:var(--silver)}
+.headroom-action{padding:16px;border-radius:12px;background:var(--surface-2);min-width:0}
+.headroom-action .action-line{margin:0;font-size:clamp(1.7rem,5.5vw,2.2rem);font-weight:700;letter-spacing:-.03em;line-height:1.2;max-width:none}
+.headroom-action a{color:var(--silver);text-decoration:none}
+.headroom-action a:hover{color:var(--flare)}
+@media(min-width:721px){.headroom-grid{grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);align-items:stretch}.headroom-action{display:flex;flex-direction:column;justify-content:center}}
 .calorie-hero{padding:22px 20px 18px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(165deg,rgb(245 158 11 / 8%),transparent 42%),var(--surface);box-shadow:var(--shadow);margin:0 0 16px}
 .calorie-hero.is-flare{border-color:rgb(245 158 11 / 45%)}
 .hero-label{margin:0 0 6px;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted)}

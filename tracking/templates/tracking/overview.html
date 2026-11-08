@@ -5,6 +5,24 @@
   {% if next_day %}<a class="date-nav" href="?day={{ next_day|date:'Y-m-d' }}{% if synthetic %}&amp;synthetic=1{% endif %}" aria-label="Next day">›</a>{% else %}<span class="date-nav is-disabled" aria-hidden="true">›</span>{% endif %}
 </nav>
 
+<section class="headroom{% if headroom.status == 'running_low' %} is-low{% elif headroom.status == 'stretched' %} is-stretched{% endif %}" aria-label="Your Headroom">
+  <div class="headroom-grid">
+    <div>
+      <p class="hero-label">Your Headroom</p>
+      <p class="hero-value">{% if headroom.score %}{{ headroom.score }}{% else %}—{% endif %} <span class="headroom-status">{{ headroom.status_label }}</span></p>
+      <p class="hero-sub">{{ headroom.scale }}</p>
+      <p>{{ headroom.summary }}</p>
+      {% if headroom.change %}<p class="hero-sub">{{ headroom.change }}</p>{% endif %}
+      <p class="hero-sub">Calculated {{ headroom.updated }}. {% if headroom.missing %}Not on file: {{ headroom.missing|join:", " }}. {% endif %}{{ headroom.uncollected }}</p>
+    </div>
+    <div class="headroom-action">
+      <p class="hero-label">Start here</p>
+      <p class="action-line">{% if headroom.action.href %}<a href="{{ headroom.action.href }}">{{ headroom.action.label }}</a>{% else %}{{ headroom.action.label }}{% endif %}</p>
+      {% if headroom.alternatives %}<p class="hero-sub">Other options: {% for alt in headroom.alternatives %}{% if alt.href %}<a href="{{ alt.href }}">{{ alt.label }}</a>{% else %}{{ alt.label }}{% endif %}{% if not forloop.last %} or {% endif %}{% endfor %}</p>{% endif %}
+    </div>
+  </div>
+</section>
+
 <section class="calorie-hero{% if metrics.calories.near_goal %} is-flare{% endif %}">
   {% if metrics.calories.logged %}
     <p class="hero-label">Calories</p>

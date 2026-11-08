@@ -45,6 +45,7 @@ def owner_only(view):
 @require_http_methods(['GET'])
 def overview(request):
     from datetime import date
+    from tracking.headroom import headroom
     from tracking.today import day_metrics
     today = timezone.localdate()
     is_test = request.GET.get('synthetic') == '1'
@@ -64,6 +65,7 @@ def overview(request):
         'prev_day': day - timedelta(days=1),
         'next_day': day + timedelta(days=1) if day < today else None,
         'metrics': day_metrics(request.user, day, include_synthetic=is_test),
+        'headroom': headroom(request.user, day, include_synthetic=is_test),
         'synthetic': is_test,
     })
 
