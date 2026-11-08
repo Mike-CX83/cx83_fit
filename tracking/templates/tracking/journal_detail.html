@@ -1,7 +1,6 @@
 {% extends 'tracking/base.html' %}{% block content %}
-<p class="eyebrow">Journal</p><h1>{{ entry.local_date|date:'M j, Y' }}</h1>
-<p>{{ governing_line }}</p>
-<p>Captured {{ entry.captured_at|date:'M j, Y g:i A' }} {{ entry.source_timezone }}. {% if entry.occurred_at %}Occurred {{ entry.occurred_at|date:'M j, Y g:i A' }}.{% else %}Date only. No clock time was recorded.{% endif %} Version {{ entry.version }}.{% if entry.synthetic %} Synthetic.{% endif %}</p>
+<h1 class="page-title">{{ entry.local_date|date:'M j, Y' }}</h1>
+<p class="quiet">Captured {{ entry.captured_at|date:'M j, Y g:i A' }} {{ entry.source_timezone }}. {% if entry.occurred_at %}Occurred {{ entry.occurred_at|date:'M j, Y g:i A' }}.{% else %}Date only. No clock time was recorded.{% endif %}</p>
 {% if error %}<p class="notice">{{ error }}</p>{% endif %}
 <section class="panel"><h2>Entry</h2><p class="import-notes">{{ entry.body }}</p>
 {% if observation %}<p>{{ observation.domain_label }} · {{ observation.metric_key }} · {{ observation.value_state }}{% if observation.value_json %} · {{ observation.value_json.boolean|yesno:'yes,no' }}{% endif %}</p>
