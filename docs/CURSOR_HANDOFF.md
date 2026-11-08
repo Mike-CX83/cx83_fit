@@ -1,5 +1,9 @@
 # Cursor continuation handoff
 
+## Lifted chrome and Holding Space confirmed live, November 8, 2026, 4:27 AM CST
+
+The lifted navy chrome, Electric Blue header mark, and Holding Space were already on `live.cx83labs.com` from the 4:21 AM publish. This pass copied the remaining More page icons and the install-screen color `#16233C`. Migration `0010` was already applied. No new migration. No text was sent. `SMS_ENABLED` stays unset. The app container is restarted only for the manifest change. The shared proxy is not restarted.
+
 ## Headspace and Holding Space, November 8, 2026, 4:21 AM CST
 
 Today's check-in block is named Headspace. The number is still Daily State. Holding Space is a tab at `/holding/` with room for five people. Each person has a name and a phone number. Add Partner saves them. Reach Out texts only the selected people who have not opted out. The message is "Mike could use a check in. Do you have a moment to connect? Reply STOP to opt out." It does not include a score or a health record. Reply STOP opts that number out. A repeated request does not send twice.

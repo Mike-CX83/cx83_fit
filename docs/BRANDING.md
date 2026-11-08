@@ -17,18 +17,21 @@ Match the CX83 Labs site dark treatment for daily use. Midnight ground, silver t
 
 | Role | Value |
 | :--- | :--- |
-| Page | Midnight `#080E22` |
-| Cards / surfaces | `#101A33` |
-| Raised surface | `#1B2945` |
-| Ink | Silver `#E6EBF5` |
-| Muted text | `#A4B6D3` |
-| Border | `#33405D` |
-| Action buttons | Electric Blue `#246BFF` |
-| Action hover | `#174ED4` |
+| Page | Lifted midnight `#16233C` |
+| Cards / surfaces | `#223252` |
+| Raised surface | `#2C3E66` |
+| Ink | Silver `#F4F7FC` |
+| Muted text | `#C5D2E8` |
+| Border | `#4A5C82` |
+| Action buttons | Electric Blue `#2F74FF` |
+| Action hover | `#1B5FE0` |
 | Links / kickers | `#B6EAFF` |
-| Focus / accent | Violet `#8247F5` |
+| Focus / accent | Violet `#8B5CF6` |
+| Flare | Amber `#F6B230` (deep `#E08912`) |
 
-Header mark: `symbol-showcase.svg` on dark chrome.  
+Selected navigation uses Electric Blue. Amber is remaining calories and near-goal emphasis. Purple marks protein. Yellow marks a value that needs a look. Do not spread amber across every control.
+
+Small header mark: `symbol-light.svg`, the everyday Electric Blue frame. The showcase frame keeps a hairline stroke meant for large display and looks soft at 32px.  
 Footer wordmark: `logo-dark.svg`.
 
 Working interface face: Geist Sans when available, with system UI as fallback. Logo lettering remains artwork, not a webfont.

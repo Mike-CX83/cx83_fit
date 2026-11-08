@@ -1,5 +1,9 @@
 # Verification checkpoint
 
+## Lifted chrome and Holding Space confirmed live, November 8, 4:27 AM CST
+
+Host files for the chrome, Today, and Holding Space already matched this checkout. More page icons and the web app manifest color `#16233C` were the two differences and are now on the host. Migration `0010` was already applied. No text was sent.
+
 ## Headspace and Holding Space, November 8, 4:21 AM CST
 
 Migration `tracking.0010_holding_space` applied after `personal-health-backup.service` returned success. App container `933f44f1a1eb` restarted at `2026-11-08T10:21:35Z`. `OURA_ENABLED` remains 0. `SMS_ENABLED` is unset and the app reports texting is not configured. Partner count 0. Message count 0. No text was sent. Standalone `oura-personal.service` remained active since `2026-11-06 19:49:57 UTC`. Shared proxy start remains `2026-10-10T17:40:21Z`.
