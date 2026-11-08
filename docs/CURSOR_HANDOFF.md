@@ -1,5 +1,9 @@
 # Cursor continuation handoff
 
+## Headspace card only, November 8, 2026, 4:47 AM CST
+
+The whole-app pink shift is reverted. Buttons, tabs, and the page ground are back to the previous blue-on-navy chrome. Server commit `215d297`. Headspace is the only card that changed: a darker navy fading into purple, with very little pink. The word Headspace is slightly heavier so it reads as the primary block. Public login serves `shell-11`. The shared proxy was not restarted.
+
 ## Twilio number, planned, November 8, 2026, 4:44 AM CST
 
 Mike added the texting setup to the Holding Space plan. Reach Out needs a Twilio account, billing, and one dedicated texting number before it can send. Cursor connects those credentials on the dashboard server only, in a private file, and then turns the existing Reach Out path on. Twilio's US sender registration is a separate step and can delay live texts after the number exists. `static1.twilio.com` is not the send address. Nothing was purchased, no credentials were installed, and `SMS_ENABLED` stays unset. The partner check-in page is still only a plan.
