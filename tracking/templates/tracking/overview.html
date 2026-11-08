@@ -6,21 +6,21 @@
 </nav>
 
 <section class="headroom{% if headroom.status == 'running_low' %} is-low{% elif headroom.status == 'stretched' %} is-stretched{% endif %}" aria-label="Headspace">
-  <div class="headroom-grid">
-    <div>
-      <p class="hero-label">Headspace</p>
-      <p class="hero-value">{% if headroom.score %}{{ headroom.score }}{% else %}—{% endif %} <span class="headroom-status">{{ headroom.status_label }}</span></p>
-      <p class="hero-sub">{{ headroom.scale }}</p>
-      <p>{{ headroom.summary }}</p>
-      {% if headroom.change %}<p class="hero-sub">{{ headroom.change }}</p>{% endif %}
-      <p class="hero-sub">Calculated {{ headroom.updated }}. {% if headroom.missing %}Not on file: {{ headroom.missing|join:", " }}. {% endif %}{{ headroom.uncollected }}</p>
-    </div>
-    <div class="headroom-action">
-      <p class="hero-label">Start here</p>
-      <p class="action-line">{% if headroom.action.href %}<a href="{{ headroom.action.href }}">{{ headroom.action.label }}</a>{% else %}{{ headroom.action.label }}{% endif %}</p>
-      {% if headroom.alternatives %}<p class="hero-sub">Other options: {% for alt in headroom.alternatives %}{% if alt.href %}<a href="{{ alt.href }}">{{ alt.label }}</a>{% else %}{{ alt.label }}{% endif %}{% if not forloop.last %} or {% endif %}{% endfor %}</p>{% endif %}
-    </div>
+  <p class="hero-label">Headspace</p>
+  <div class="headroom-banner">
+    <p class="hero-value">{% if headroom.score %}{{ headroom.score }}{% else %}—{% endif %}</p>
+    <p class="headroom-status">{{ headroom.status_label }}</p>
   </div>
+  <div class="goal-bar capacity{% if headroom.bar == None %} is-empty{% endif %}"><span style="width:{% if headroom.bar != None %}{{ headroom.bar|floatformat:0 }}{% else %}0{% endif %}%"></span></div>
+  <p class="action-line">{% if headroom.action.href %}<a class="banner-action" href="{{ headroom.action.href }}">{{ headroom.action.label }}</a>{% else %}<span class="banner-action">{{ headroom.action.label }}</span>{% endif %}</p>
+  <details class="fold">
+    <summary>Details</summary>
+    <p>{{ headroom.summary }}</p>
+    <p>{{ headroom.scale }}</p>
+    {% if headroom.alternatives %}<p>Also: {% for alt in headroom.alternatives %}{% if alt.href %}<a href="{{ alt.href }}">{{ alt.label }}</a>{% else %}{{ alt.label }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+    {% if headroom.change %}<p>{{ headroom.change }}</p>{% endif %}
+    <p>Calculated {{ headroom.updated }}.{% if headroom.missing %} Not on file: {{ headroom.missing|join:", " }}.{% endif %} {{ headroom.uncollected }}</p>
+  </details>
 </section>
 
 <section class="calorie-hero{% if metrics.calories.near_goal %} is-flare{% endif %}">

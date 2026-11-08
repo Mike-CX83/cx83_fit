@@ -1,22 +1,36 @@
 {% extends 'tracking/base.html' %}{% block content %}
 <h1 class="page-title">Plan</h1>
-<p class="quiet">{{ plan.start }} through {{ plan.end }}. <a href="{% url 'diary' %}">Diary</a></p>
-{% if error %}<p class="notice">{{ error }}</p>{% endif %}
+<p class="quiet">{{ plan.start }} through {{ plan.end }}.</p>
 <div class="summary-grid">
-  <section class="panel"><h2>Steps</h2>{% for row in plan.analysis.steps %}<p>{{ row.average }} steps a day from {{ row.source }}{% if row.device %} · {{ row.device }}{% endif %}. Observed {{ row.observed_days }} of {{ plan.window_days }} days. Latest {{ row.latest_date }}.</p>{% empty %}<p>No step days in this window.</p>{% endfor %}</section>
-  <section class="panel"><h2>Sleep</h2>{% for row in plan.analysis.sleep_minutes %}<p>{{ row.average }} minutes a night from {{ row.source }}{% if row.device %} · {{ row.device }}{% endif %}. Observed {{ row.observed_days }} of {{ plan.window_days }} days.</p>{% empty %}<p>No sleep days in this window.</p>{% endfor %}</section>
-  <section class="panel"><h2>Workouts</h2>{% for row in plan.analysis.workout_minutes %}<p>{{ row.average }} minutes a day from {{ row.source }}. Observed {{ row.observed_days }} days.</p>{% empty %}<p>No workout days in this window.</p>{% endfor %}</section>
-  <section class="panel"><h2>Calories burned</h2>
-    {% for row in plan.analysis.active_calories %}<p>{{ row.average }} active kcal a day from {{ row.source }}{% if row.device %} · {{ row.device }}{% endif %}. Observed {{ row.observed_days }} days. This is burn, not food.</p>{% endfor %}
-    {% for row in plan.analysis.total_calories %}<p>{{ row.average }} total kcal a day from {{ row.source }}{% if row.device %} · {{ row.device }}{% endif %}. Observed {{ row.observed_days }} days.</p>{% endfor %}
-    {% if not plan.analysis.active_calories and not plan.analysis.total_calories %}<p>No device burn in this window.</p>{% endif %}
+  <section class="panel stat-card"><h2>Steps</h2>{% for row in plan.analysis.steps %}
+    <p class="stat-value">{{ row.average }}</p><p class="quiet">{{ row.source }}</p>
+    <div class="goal-bar"><span style="width:{% widthratio row.observed_days plan.window_days 100 %}%"></span></div>
+    <details class="fold"><summary>Details</summary><p>{{ row.observed_days }} of {{ plan.window_days }} days. Latest {{ row.latest_date }}.</p></details>
+  {% empty %}<p>No steps.</p>{% endfor %}</section>
+  <section class="panel stat-card"><h2>Sleep</h2>{% for row in plan.analysis.sleep_minutes %}
+    <p class="stat-value">{{ row.average }}<span> min</span></p><p class="quiet">{{ row.source }}</p>
+    <div class="goal-bar"><span style="width:{% widthratio row.observed_days plan.window_days 100 %}%"></span></div>
+    <details class="fold"><summary>Details</summary><p>{{ row.observed_days }} of {{ plan.window_days }} nights.</p></details>
+  {% empty %}<p>No sleep.</p>{% endfor %}</section>
+  <section class="panel stat-card"><h2>Workouts</h2>{% for row in plan.analysis.workout_minutes %}
+    <p class="stat-value">{{ row.average }}<span> min</span></p><p class="quiet">{{ row.source }}</p>
+    <div class="goal-bar"><span style="width:{% widthratio row.observed_days plan.window_days 100 %}%"></span></div>
+  {% empty %}<p>No workouts.</p>{% endfor %}</section>
+  <section class="panel stat-card"><h2>Burn</h2>
+    {% for row in plan.analysis.active_calories %}<p class="stat-value">{{ row.average }}</p><p class="quiet">Active · {{ row.source }}</p><div class="goal-bar"><span style="width:{% widthratio row.observed_days plan.window_days 100 %}%"></span></div>{% endfor %}
+    {% for row in plan.analysis.total_calories %}<p class="stat-value">{{ row.average }}</p><p class="quiet">Total · {{ row.source }}</p><div class="goal-bar"><span style="width:{% widthratio row.observed_days plan.window_days 100 %}%"></span></div>{% endfor %}
+    {% if not plan.analysis.active_calories and not plan.analysis.total_calories %}<p>No burn.</p>{% endif %}
+    <details class="fold"><summary>Details</summary><p>Device burn, not food.</p></details>
   </section>
-  <section class="panel"><h2>Diet numbers</h2>
-    {% for row in plan.analysis.calories %}<p>{{ row.average }} kcal from {{ row.source }}. Observed {{ row.observed_days }} days.</p>{% endfor %}
-    {% for row in plan.analysis.protein %}<p>{{ row.average }} g protein from {{ row.source }}.{% if plan.protein_target_g %} Target on file: {{ plan.protein_target_g }} g.{% endif %} Observed {{ row.observed_days }} days.</p>{% endfor %}
-    {% for row in plan.analysis.fiber %}<p>{{ row.average }} g fiber from {{ row.source }}. Observed {{ row.observed_days }} days.</p>{% endfor %}
-    {% for row in plan.analysis.net_carbohydrates %}<p>{{ row.average }} g net carbs from {{ row.source }}, calculated where total carbs and fiber were both recorded. Observed {{ row.observed_days }} days.</p>{% endfor %}
-    {% if not plan.analysis.calories and not plan.analysis.protein %}<p>No daily diet totals in this window.</p>{% endif %}
+  <section class="panel stat-card"><h2>Food</h2>
+    {% for row in plan.analysis.calories %}<p class="stat-value">{{ row.average }}</p><p class="quiet">kcal · {{ row.source }}</p><div class="goal-bar"><span style="width:{% widthratio row.observed_days plan.window_days 100 %}%"></span></div>{% endfor %}
+    {% for row in plan.analysis.protein %}<p class="stat-value">{{ row.average }}<span> g</span></p><p class="quiet">Protein · {{ row.source }}</p><div class="goal-bar protein"><span style="width:{% widthratio row.observed_days plan.window_days 100 %}%"></span></div>{% endfor %}
+    {% if not plan.analysis.calories and not plan.analysis.protein %}<p>No food totals.</p>{% endif %}
+    <details class="fold"><summary>Details</summary>
+      {% for row in plan.analysis.fiber %}<p>{{ row.average }} g fiber · {{ row.source }}</p>{% endfor %}
+      {% for row in plan.analysis.net_carbohydrates %}<p>{{ row.average }} g net carbs · {{ row.source }}</p>{% endfor %}
+      {% if plan.protein_target_g %}<p>Protein goal {{ plan.protein_target_g }} g.</p>{% endif %}
+    </details>
   </section>
 </div>
 <section class="panel"><h2>Goals</h2>
@@ -28,11 +42,11 @@
 </section>
 <section class="panel"><h2>Trends</h2>
   {% for line in plan.trends %}
-    <h3>{{ line.title }}</h3>
+    <h3>{{ line.title }} <a class="detail-link" href="{{ line.href }}">Chart</a></h3>
     {% for series in line.series %}
-      <p>{{ series.source }}: {{ series.first }} on {{ series.first_date }}{% if series.change != None %}, {{ series.last }} on {{ series.last_date }}, change {{ series.change }} {{ series.unit }}{% endif %}. {{ series.observed }} observations.</p>
+      <p class="stat-value">{% if series.change != None %}{{ series.change }} <span>{{ series.unit }}</span>{% else %}{{ series.last }}{% endif %}</p>
+      <details class="fold"><summary>Details</summary><p>{{ series.source }}: {{ series.first }} on {{ series.first_date }}{% if series.change != None %} to {{ series.last }} on {{ series.last_date }}{% endif %}. {{ series.observed }} observations.</p></details>
     {% empty %}<p>Nothing recorded.</p>{% endfor %}
-    <p><a href="{{ line.href }}">Open the {{ line.title|lower }} chart</a></p>
   {% endfor %}
 </section>
 <section class="panel"><h2>Labs, meds, and diagnoses</h2>

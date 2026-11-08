@@ -17,9 +17,9 @@ Match the CX83 Labs site dark treatment for daily use. Midnight ground, silver t
 
 | Role | Value |
 | :--- | :--- |
-| Page | Lifted midnight `#16233C` |
-| Cards / surfaces | `#223252` |
-| Raised surface | `#2C3E66` |
+| Page | Lifted midnight `#243864` |
+| Cards / surfaces | `#2C4678` |
+| Raised surface | `#385688` |
 | Ink | Silver `#F4F7FC` |
 | Muted text | `#C5D2E8` |
 | Border | `#4A5C82` |
@@ -31,7 +31,7 @@ Match the CX83 Labs site dark treatment for daily use. Midnight ground, silver t
 
 Selected navigation uses Electric Blue. Amber is remaining calories and near-goal emphasis. Purple marks protein. Yellow marks a value that needs a look. Do not spread amber across every control.
 
-Small header mark: `symbol-light.svg`, the everyday Electric Blue frame. The showcase frame keeps a hairline stroke meant for large display and looks soft at 32px.  
+Small header mark: `symbol-showcase.svg`, the existing blue-to-purple frame. The flat Electric Blue `symbol-light.svg` reads darker and less like the usual mark at this size.  
 Footer wordmark: `logo-dark.svg`.
 
 Working interface face: Geist Sans when available, with system UI as fallback. Logo lettering remains artwork, not a webfont.

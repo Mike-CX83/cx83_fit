@@ -60,6 +60,7 @@ def headroom(owner, day, *, include_synthetic=False):
         'display': DISPLAY,
         'formula': DAILY_STATE_FORMULA,
         'score': None if result is None else format(result.quantize(Decimal('0.01')), 'f'),
+        'bar': None if result is None else float(min(Decimal('100'), max(Decimal('0'), result))),
         'scale': '0 to 100. Higher means more capacity. This is the Daily State check-in from confirmed mood, energy, and focus. It is not a prediction or a verdict.',
         'status': status,
         'status_label': status_label,

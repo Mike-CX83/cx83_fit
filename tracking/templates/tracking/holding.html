@@ -1,8 +1,10 @@
 {% extends 'tracking/base.html' %}{% block content %}
 <h1 class="page-title">Holding Space</h1>
-<p class="quiet">Up to five people. A text comes from the app number, not your phone.</p>
-<p>{{ message }}</p>
-{% if not sms_ready %}<p class="notice">The app number is not set up yet. You can save people now. Reach Out cannot send until that number exists.</p>{% endif %}
+<p class="quiet">Up to five people. Texts use the app number.</p>
+<details class="fold"><summary>Details</summary>
+  <p>{{ message }}</p>
+  {% if not sms_ready %}<p>The app number is not set up yet. You can save people now. Reach Out cannot send until that number exists.</p>{% endif %}
+</details>
 {% if error %}<p class="notice">{{ error }}</p>{% endif %}
 
 {% if openings %}
