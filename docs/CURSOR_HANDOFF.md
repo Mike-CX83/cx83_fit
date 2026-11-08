@@ -1,5 +1,13 @@
 # Cursor continuation handoff
 
+## Twilio number, planned, November 8, 2026, 4:44 AM CST
+
+Mike added the texting setup to the Holding Space plan. Reach Out needs a Twilio account, billing, and one dedicated texting number before it can send. Cursor connects those credentials on the dashboard server only, in a private file, and then turns the existing Reach Out path on. Twilio's US sender registration is a separate step and can delay live texts after the number exists. `static1.twilio.com` is not the send address. Nothing was purchased, no credentials were installed, and `SMS_ENABLED` stays unset. The partner check-in page is still only a plan.
+
+## Partner check-in view, planned, November 8, 2026, 4:42 AM CST
+
+Mike wants each Holding Space person to have a small dashboard so they can check in on him with minimal information. The plan is in `docs/journal-intelligence-handoff/06-PHASES-AND-ACCEPTANCE.md` under Partner check-in view. It is not built. No partner link exists. The page would show only a chosen name, the Headspace word, whether that word is current, and an "I checked in" action. It would not show the score number, journal text, meals, sleep, weight, labs, medications, or diagnoses. The owner turns sharing on per person and can close the page. Automatic low-score texts stay separate and unbuilt. The app number is still not installed.
+
 ## Pink and purple on navy, November 8, 2026, 4:41 AM CST
 
 Actions, the selected tab, plus marks, and progress bars use a purple-to-pink blend. The page ground is navy `#171B3C`. Calories left are pink. Yellow stays only on a flagged value. Published with the stylesheet cache `shell-10`.
