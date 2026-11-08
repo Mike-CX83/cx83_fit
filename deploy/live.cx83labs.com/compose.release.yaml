@@ -1,0 +1,9 @@
+# The tested image must be loaded from the reviewed archive before startup.
+# Use after compose.yaml and compose.override.yaml, with --no-build --pull never.
+services:
+  app:
+    platform: linux/amd64
+    image: sha256:67f557de8420e512fdda94ffcc80c260677843a6e0245aa8d90d5b3adf956ee1
+    pull_policy: never
+    environment:
+      OURA_ENABLED: "0"

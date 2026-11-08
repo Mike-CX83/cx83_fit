@@ -1,0 +1,20 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<p class="eyebrow">Body tracking</p><h1>Progress photos</h1>
+<p>Follow your progress by capture date. Photos stay behind your private login.</p>
+<nav><a class="button" href="{% url 'photo_upload' %}">Add photo</a><a href="{% url 'photo_compare' %}">Compare dates</a><a href="/">Overview</a></nav>
+<form method="get" class="panel filter-form">
+  <label for="photo-view">View</label><select id="photo-view" name="view"><option value="">All views</option>{% for value,label in views %}<option value="{{ value }}" {% if view == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <p><label><input type="checkbox" name="synthetic" value="1" {% if synthetic %}checked{% endif %}> Include synthetic test images</label></p><button>Apply filters</button>
+</form>
+{% if synthetic %}<p class="notice">Synthetic images are included and labeled. They are excluded from personal history by default.</p>{% endif %}
+<p>{{ page.paginator.count }} photos in this selection.</p>
+<div class="photo-grid">
+{% for photo in page %}<section class="panel photo-card">
+  <a href="{% url 'photo_detail' photo.id %}"><img src="{% url 'photo_image' photo.id %}" alt="{{ photo.get_view_display }} view from {{ photo.capture_date|date:'Y-m-d' }}{% if photo.synthetic %}, synthetic test{% endif %}" loading="lazy" width="{{ photo.width }}" height="{{ photo.height }}"></a>
+  <h2><a href="{% url 'photo_detail' photo.id %}">{{ photo.capture_date|date:'M j, Y' }} · {{ photo.get_view_display }}</a></h2>
+  {% if photo.synthetic %}<span class="badge">Synthetic</span>{% endif %}
+  {% if photo.notes %}<p>{{ photo.notes|truncatechars:160 }}</p>{% endif %}
+</section>{% empty %}<section class="panel"><h2>No photos yet</h2><p>Add a photo with its capture date and view to begin. Missing photos do not imply any change in your progress.</p></section>{% endfor %}
+</div>
+<nav>{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}&amp;view={{ view }}{% if synthetic %}&amp;synthetic=1{% endif %}">Previous page</a>{% endif %}{% if page.has_next %}<a href="?page={{ page.next_page_number }}&amp;view={{ view }}{% if synthetic %}&amp;synthetic=1{% endif %}">Next page</a>{% endif %}</nav>
+{% endblock %}

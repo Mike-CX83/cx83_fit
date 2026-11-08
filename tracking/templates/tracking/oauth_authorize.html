@@ -1,0 +1,7 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<section class="panel"><h1>Authorize dashboard access</h1>
+{% if error %}<p class="notice">This authorization request could not be validated. Return to the client and start again.</p>
+{% else %}<p><strong>{{ application.name }}</strong> requests access to your private dashboard.</p><ul>{% for scope in scopes_descriptions %}<li>{{ scope }}</li>{% endfor %}</ul>
+<p>Read access includes your stored health history. Photos require a separate explicit request. Write access, if listed, allows only approved tracking updates and saved reviews. You can revoke this connection from dashboard settings.</p>
+<form method="post">{% csrf_token %}{% for field in form %}{% if field.is_hidden %}{{ field }}{% endif %}{% endfor %}{{ form.errors }}{{ form.non_field_errors }}<button type="submit" name="allow" value="true">Authorize this access</button> <button type="submit" class="secondary">Cancel</button></form>{% endif %}</section>
+{% endblock %}

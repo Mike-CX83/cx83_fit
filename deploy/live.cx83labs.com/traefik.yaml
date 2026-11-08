@@ -1,0 +1,33 @@
+# Prepared only. Proposed destination:
+# /data/coolify/proxy/dynamic/personal-health-dashboard.yaml
+http:
+  routers:
+    personal-health-https:
+      rule: Host(`live.cx83labs.com`)
+      entryPoints: [https]
+      service: personal-health-backend
+      middlewares: [personal-health-forwarded]
+      tls:
+        certResolver: letsencrypt
+    personal-health-http:
+      rule: Host(`live.cx83labs.com`)
+      entryPoints: [http]
+      service: noop@internal
+      middlewares: [personal-health-redirect]
+  middlewares:
+    personal-health-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    personal-health-forwarded:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+          X-Forwarded-Host: live.cx83labs.com
+          Forwarded: ""
+  services:
+    personal-health-backend:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://personal-health-backend:8000

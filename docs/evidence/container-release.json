@@ -1,0 +1,34 @@
+{
+  "image": "sha256:67f557de8420e512fdda94ffcc80c260677843a6e0245aa8d90d5b3adf956ee1",
+  "platform": "linux/amd64",
+  "before_restart": true,
+  "after_restart_with_same_browser_session": true,
+  "https_proxy_and_header_override": true,
+  "anonymous_browser_and_mcp_denied": true,
+  "public_policies_and_css": true,
+  "csrf_enforced": true,
+  "concurrent_requests": 12,
+  "maximum_concurrency": 2,
+  "observed_memory": "99.07MiB / 384MiB",
+  "deployment_checks": "passed",
+  "deliberate_hsts_warnings": [
+    "security.W005",
+    "security.W021"
+  ],
+  "volume": {
+    "records": 1,
+    "duplicate_records": 0,
+    "directory_mode": "0700",
+    "database_mode": "0600"
+  },
+  "no_public_ports": true,
+  "read_only_root": true,
+  "memory_limit_mib": 384,
+  "cpu_limit": 0.75,
+  "pids_limit": 128,
+  "provider_calls": 0,
+  "synthetic_only": true,
+  "python_base_digest": "sha256:4840d514c583a4d3d8cad3940e68dee6f0f6f3635c12fcd0a3d74c21a5b93a54",
+  "traefik_fixture_digest": "sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d",
+  "scope": "Focused local Linux release verification; no public TLS or ChatGPT acceptance"
+}

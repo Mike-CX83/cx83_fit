@@ -1,0 +1,10 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<p class="eyebrow">Progress photo</p><h1>{{ photo.get_view_display }} · {{ photo.capture_date|date:'M j, Y' }}</h1>
+{% if photo.synthetic %}<p class="notice">Synthetic test image. Excluded from personal history.</p>{% endif %}
+<nav><a href="{% url 'photo_gallery' %}{% if photo.synthetic %}?synthetic=1{% endif %}">All photos</a><a href="{% url 'photo_compare' %}">Compare dates</a></nav>
+<section class="panel"><img class="photo-detail" src="{% url 'photo_image' photo.id %}" alt="{{ photo.get_view_display }} view from {{ photo.capture_date|date:'Y-m-d' }}" width="{{ photo.width }}" height="{{ photo.height }}">
+<dl class="details"><dt>Capture date</dt><dd>{{ photo.capture_date|date:'Y-m-d' }}</dd><dt>Uploaded</dt><dd>{{ photo.uploaded_at|date:'Y-m-d H:i T' }}</dd><dt>Source</dt><dd>Manual photo upload</dd><dt>Notes</dt><dd>{{ photo.notes|default:'None recorded'|linebreaksbr }}</dd></dl>
+<p><a href="{% url 'photo_original' photo.id %}">Download original</a>. The original may retain location and camera metadata.</p></section>
+<section class="panel"><h2>Delete this photo</h2><p>This removes both image files and hides the photo. A minimal record remains to prevent a retried upload from restoring it. Existing backups, if any, follow their own retention schedule.</p>
+<form method="post" action="{% url 'photo_delete' photo.id %}">{% csrf_token %}<p><label><input type="checkbox" name="confirm_delete" value="yes" required> Delete this photo and its original</label></p><button class="danger">Delete photo</button></form></section>
+{% endblock %}

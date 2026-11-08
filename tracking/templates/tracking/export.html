@@ -1,0 +1,4 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<h1>Export your history</h1><p>Download JSON, spreadsheet safe CSV, correction history, source metadata, nutrition targets and original photos together in a ZIP file.</p>
+<section class="panel"><p>This download contains private information and is not encrypted. Original photos preserve their original metadata. Keep the download in private storage.</p><p>Deleted measurements and summaries retain their audit history and tombstones. Deleted photo files are excluded. Maximum export size: 512 MiB.</p><form method="post">{% csrf_token %}<p><label><input type="checkbox" name="include_synthetic" value="yes"> Include synthetic test records</label></p><p><label><input type="checkbox" name="confirm_export" value="yes" required> Download my private history to this device</label></p><button>Download private export</button></form></section><a href="/">Back to overview</a>
+{% endblock %}

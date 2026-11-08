@@ -1,0 +1,25 @@
+# Prepared only. Requires explicit deployment approval and synthetic runtime proof.
+# Use with the repository compose.yaml. Do not run against another Compose project.
+services:
+  app:
+    environment:
+      DASHBOARD_ALLOWED_HOSTS: live.cx83labs.com
+      DASHBOARD_CSRF_ORIGINS: https://live.cx83labs.com
+      DASHBOARD_TRUST_PROXY: "1"
+      MCP_AUTH_MODE: builtin
+      MCP_PUBLIC_ORIGIN: https://live.cx83labs.com
+      MCP_WRITES_ENABLED: "0"
+    # Only the dedicated ingress network and host loopback can reach this port.
+    # Traefik must replace forwarded headers; never publish this backend publicly.
+    command: [uvicorn, dashboard.asgi:application, --host, 0.0.0.0, --port, "8000", --workers, "1", --no-access-log, --proxy-headers, --forwarded-allow-ips, "*"]
+    labels:
+      traefik.enable: "false"
+    networks:
+      personal-health: {}
+      personal-health-ingress:
+        aliases:
+          - personal-health-backend
+networks:
+  personal-health-ingress:
+    external: true
+    name: personal-health-ingress

@@ -1,0 +1,37 @@
+{% extends 'tracking/base.html' %}
+{% block content %}
+<section class="panel">
+  <p class="eyebrow">Body measurements</p>
+  {% if receipt %}
+    <h1>Import complete</h1>
+    <p>{{ receipt.created }} measurements added. {{ receipt.skipped }} matching measurements skipped.</p>
+    <p>Source: <strong class="import-source">csv:{{ preview.namespace }}</strong>. Every added measurement has its own source and history record.</p>
+    <nav><a class="button" href="/">Personal history</a><a href="/?synthetic=1">Include synthetic tests</a><a href="{% url 'measurement_import' %}">Import another file</a></nav>
+  {% else %}
+    <h1>Review measurements</h1>
+    <p>{{ rows|length }} rows from <strong class="import-source">csv:{{ preview.namespace }}</strong>. No measurements have been added yet.</p>
+    <p>Review dates, units, sources and synthetic labels. Confirmation uses exactly these uploaded rows. This review expires 15 minutes after upload.</p>
+    {% if error %}<p class="errorlist" role="alert">{{ error }}</p>{% endif %}
+    {% if has_conflicts %}<p class="notice">This import has conflicts. No rows can be added. Correct the source file or remove conflicting rows, then upload it again.</p>{% endif %}
+    {% for row in rows %}
+      <article class="import-row">
+        <div>
+          <strong>{{ row.measurement.metric|title }}: {{ row.measurement.value }} {{ row.measurement.unit }}</strong>
+          {% if row.measurement.synthetic %}<span class="badge">Synthetic</span>{% endif %}
+          <p>{{ row.measurement.local_date }} · {{ row.measurement.source_timezone }}</p>
+          {% if row.measurement.observed_at %}<p>Observed: {{ row.measurement.observed_at }}</p>{% endif %}
+          {% if row.measurement.location %}<p>{{ row.measurement.side|title }} {{ row.measurement.location }}</p>{% endif %}
+          <p>Source ID: {{ row.source_record_id }}</p>
+          {% if row.measurement.notes %}<p class="import-notes">{{ row.measurement.notes }}</p>{% endif %}
+        </div>
+        <div><strong>{{ row.status|title }}</strong><p>{{ row.reason }}</p></div>
+      </article>
+    {% endfor %}
+    <form method="post">
+      {% csrf_token %}
+      {% if not has_conflicts %}<button type="submit" name="action" value="confirm">Confirm import</button>{% endif %}
+      <button type="submit" name="action" value="cancel" class="secondary">Discard review</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

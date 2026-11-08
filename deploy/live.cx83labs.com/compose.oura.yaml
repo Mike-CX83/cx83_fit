@@ -1,0 +1,17 @@
+# OPTIONAL SECOND STAGE ONLY, after reachable pages and actual Oura registration.
+# Existing .env supplies OURA_CLIENT_ID. Never place the client secret in .env.
+services:
+  app:
+    environment:
+      OURA_ENABLED: "1"
+      OURA_REDIRECT_URI: https://live.cx83labs.com/integrations/oura/callback/
+      OURA_CLIENT_SECRET_FILE: /run/secrets/oura_client_secret
+      OURA_TOKEN_KEY_FILE: /run/secrets/oura_token_key
+    secrets:
+      - oura_client_secret
+      - oura_token_key
+secrets:
+  oura_client_secret:
+    file: ./secrets/oura-client-secret
+  oura_token_key:
+    file: ./secrets/oura-token-key

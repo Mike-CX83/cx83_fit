@@ -1,0 +1,26 @@
+{% extends 'tracking/base.html' %}
+{% block content %}
+<section class="panel">
+  <p class="eyebrow">Body measurements</p>
+  <h1>Import measurements</h1>
+  <p>Upload a CSV, review every row, then confirm. Uploading does not add measurements to your history.</p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Review measurements</button> <a href="/">Cancel</a>
+  </form>
+</section>
+<section class="panel">
+  <h2>Prepare your file</h2>
+  <p>This accepts the dashboard's measurement format. Files from MyFitnessPal, Oura or Apple Health need their own supported import.</p>
+  <p>Use the same source name and stable row IDs when importing again. Matching rows are skipped. Changed values under an existing ID or previously deleted rows block the entire import.</p>
+  <p>Required columns: <code>source_record_id, metric, value, unit, local_date, source_timezone, synthetic</code>.</p>
+  <p>Optional columns: <code>side, location, notes, observed_at</code>.</p>
+  <details><summary>Format details</summary>
+    <p>Use a date such as <code>2026-11-06</code>, an IANA timezone such as <code>America/Chicago</code>, and <code>true</code> or <code>false</code> for synthetic. Synthetic rows stay excluded from personal history.</p>
+    <p>Weight uses kg or lb. Circumferences use cm or in and require a location. Arm, thigh and calf also require left or right. An optional observed time must include its UTC offset.</p>
+    <p>Full header:</p><pre class="csv-header">{{ csv_header }}</pre>
+  </details>
+  <p>Unconfirmed reviews expire after 15 minutes. A new upload replaces the previous review in this browser session. Imported originals are read only.</p>
+</section>
+{% endblock %}

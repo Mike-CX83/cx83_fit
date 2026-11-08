@@ -1,0 +1,6 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<section class="panel"><p class="eyebrow">Body tracking</p><h1>Add a progress photo</h1>
+<p>Choose the capture date and front, side or back view. The displayed copy is oriented correctly and removes embedded location and camera metadata.</p>
+<p>Your original upload is also kept privately for export. It may contain location metadata. Neither copy is shared publicly or sent for analysis.</p>
+<form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button type="submit">Save photo</button> <a href="{% url 'photo_gallery' %}">Cancel</a></form></section>
+{% endblock %}

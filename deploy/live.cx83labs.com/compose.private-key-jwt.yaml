@@ -1,0 +1,16 @@
+# ChatGPT client authentication and repository editing.
+# The repository mount is the checkout ChatGPT can edit. Secrets stay outside it.
+# Drop these mounts once a later image already contains the modules.
+services:
+  app:
+    environment:
+      SITE_EDITS_ENABLED: "1"
+      DASHBOARD_REPOSITORY_ROOT: /repo
+      WHITENOISE_USE_FINDERS: "1"
+    volumes:
+      - /opt/personal-health-dashboard/dashboard:/app/dashboard
+      - /opt/personal-health-dashboard/tracking:/app/tracking
+      - /opt/personal-health-dashboard/dashboard:/repo/dashboard
+      - /opt/personal-health-dashboard/tracking:/repo/tracking
+      - /opt/personal-health-dashboard/docs:/repo/docs:ro
+      - /opt/personal-health-dashboard/runtime:/repo/runtime

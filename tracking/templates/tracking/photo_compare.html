@@ -1,0 +1,6 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<p class="eyebrow">Body tracking</p><h1>Compare photos</h1><p>Select two capture dates and the same view. If a date has multiple uploads, the latest upload is shown. No automated body analysis is performed.</p>
+<nav><a href="{% url 'photo_gallery' %}">All photos</a><a href="/">Overview</a></nav>
+<form method="get" class="panel">{{ form.as_p }}<button>Compare dates</button></form>
+<div class="photo-grid comparison">{% for photo in photos %}<section class="panel photo-card"><h2>{{ photo.capture_date|date:'M j, Y' }} · {{ photo.get_view_display }}</h2>{% if photo.synthetic %}<p class="badge">Synthetic</p>{% endif %}<a href="{% url 'photo_detail' photo.id %}"><img src="{% url 'photo_image' photo.id %}" alt="{{ photo.get_view_display }} view from {{ photo.capture_date|date:'Y-m-d' }}" width="{{ photo.width }}" height="{{ photo.height }}"></a></section>{% endfor %}</div>
+{% endblock %}

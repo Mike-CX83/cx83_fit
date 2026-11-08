@@ -1,0 +1,35 @@
+{% extends 'tracking/base.html' %}
+{% block content %}
+<p class="eyebrow">Measurement history</p>
+<h1>{{ record.metric|title }}: {{ record.value }} {{ record.unit }}</h1>
+{% if record.synthetic %}<p class="notice">Synthetic test record. Excluded from personal history by default.</p>{% endif %}
+<p>Measured {{ record.local_date }}{% if record.side %} · {{ record.side }}{% endif %}{% if record.location %} · {{ record.location }}{% endif %}. Source: {{ record.source_system }}. Revision {{ record.version }}.</p>
+<nav><a href="/{% if record.synthetic %}?synthetic=1{% endif %}">Back to measurements</a>{% if can_correct %}<a class="button" href="{% url 'measurement_edit' record.id %}">Correct measurement</a>{% endif %}</nav>
+<section class="panel">
+<h2>Source details</h2>
+<dl class="details">
+<dt>Measurement date</dt><dd>{{ record.local_date }}</dd>
+<dt>Time observed</dt><dd>{{ record.observed_at|default_if_none:'Not recorded' }}</dd>
+<dt>Source timezone</dt><dd>{{ record.source_timezone }}</dd>
+<dt>First saved</dt><dd>{{ record.imported_at }}</dd>
+<dt>Entry method</dt><dd>{{ record.entry_method }}</dd>
+<dt>Original source ID</dt><dd>{{ record.source_record_id }}</dd>
+</dl>
+</section>
+<section class="panel">
+<h2>Changes</h2>
+<p>Earlier values stay visible here when a measurement is corrected. Source details remain attached to the original entry.</p>
+{% for entry in entries %}
+<section class="revision">
+<h3>Revision {{ entry.version }} · {{ entry.operation|title }}</h3>
+<p>{{ entry.created_at|date:'M j, Y, g:i A T' }} · {{ entry.actor_source }}</p>
+<dl class="details">
+{% for change in entry.changes %}
+<dt>{{ change.label }}</dt><dd>{% if entry.operation != 'create' %}<span class="previous">Previous: {{ change.before|default_if_none:'Not recorded' }}</span><br>{% endif %}{{ change.after|default_if_none:'Not recorded' }}</dd>
+{% endfor %}
+</dl>
+</section>
+{% empty %}<p>No correction entries have been recorded for this source.</p>{% endfor %}
+<nav aria-label="Change history pages">{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">Previous page</a>{% endif %}<span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>{% if page.has_next %}<a href="?page={{ page.next_page_number }}">Next page</a>{% endif %}</nav>
+</section>
+<section class="panel"><h2>Delete this record</h2><p>This hides the record from active history and retains its source tombstone and correction history. It does not erase earlier backups or change a provider record.</p><form method="post" action="{% url 'measurement_delete' record.id %}">{% csrf_token %}<input type="hidden" name="request_id" value="{{ delete_request_id }}"><input type="hidden" name="expected_version" value="{{ record.version }}"><p><label><input type="checkbox" name="confirm_delete" value="yes" required> Delete this tracking record</label></p><button class="danger">Delete record</button></form></section><p><a href="{% url 'reviews' %}?record_kind=measurement&amp;record_id={{ record.id }}">Add a separate annotation</a></p>{% endblock %}

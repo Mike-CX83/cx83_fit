@@ -1,0 +1,142 @@
+"""Fail closed defaults. Local mode is explicitly enabled for loopback tests."""
+import os
+from pathlib import Path
+from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+LOCAL_ONLY = os.getenv('DASHBOARD_LOCAL_ONLY') == '1'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
+if len(SECRET_KEY) < 50:
+    raise ImproperlyConfigured('Set a dedicated random DJANGO_SECRET_KEY of at least 50 characters.')
+OWNER_USERNAME = os.environ.get('OWNER_USERNAME', '')
+if not OWNER_USERNAME:
+    raise ImproperlyConfigured('Set OWNER_USERNAME to the single private owner account.')
+DEBUG = False
+ALLOWED_HOSTS = [s.strip() for s in os.getenv('DASHBOARD_ALLOWED_HOSTS', '127.0.0.1,localhost' if LOCAL_ONLY else '').split(',') if s.strip()]
+if not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS:
+    raise ImproperlyConfigured('Explicit DASHBOARD_ALLOWED_HOSTS required; wildcards are prohibited.')
+if LOCAL_ONLY and set(ALLOWED_HOSTS) - {'127.0.0.1', 'localhost', '[::1]', 'testserver'}:
+    raise ImproperlyConfigured('Local mode allows loopback hosts only.')
+PRIVATE_ROOT = Path(os.getenv('DASHBOARD_PRIVATE_ROOT', str(BASE_DIR / 'private'))).resolve()
+PRIVATE_ROOT.mkdir(mode=0o700, parents=True, exist_ok=True)
+DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': PRIVATE_ROOT / 'dashboard.sqlite3', 'OPTIONS': {'timeout': 20, 'transaction_mode': 'IMMEDIATE'}}}
+INSTALLED_APPS = ['django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles', 'axes', 'tracking', 'oauth2_provider']
+MIDDLEWARE = ['django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware', 'django.contrib.sessions.middleware.SessionMiddleware', 'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware', 'django.contrib.auth.middleware.AuthenticationMiddleware', 'django.contrib.messages.middleware.MessageMiddleware', 'django.middleware.clickjacking.XFrameOptionsMiddleware', 'axes.middleware.AxesMiddleware', 'dashboard.middleware.PrivateResponses']
+AUTHENTICATION_BACKENDS = ['axes.backends.AxesStandaloneBackend', 'django.contrib.auth.backends.ModelBackend']
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = timedelta(minutes=15)
+# The database handler sums this owner's failures across user agents and IPs.
+# Keep it explicit: changing handler requires rechecking LoginSecurityTests.
+AXES_HANDLER = 'axes.handlers.database.AxesDatabaseHandler'
+AXES_LOCKOUT_PARAMETERS = ['username']
+# Axes 8.3.1 warns on every configuration without an IP key. For this single
+# owner, its database handler sums all username failures across changing user
+# agents, cookies and IPs. LoginSecurityTests verifies the real password path.
+# Do not collect IP addresses or change to a per-browser key to silence it.
+SILENCED_SYSTEM_CHECKS = ['axes.W006']
+AXES_RESET_ON_SUCCESS = True
+AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False
+AXES_ENABLE_ACCESS_FAILURE_LOG = False
+AXES_CLIENT_IP_CALLABLE = 'dashboard.middleware.no_ip'
+ROOT_URLCONF = 'dashboard.urls'
+TEMPLATES = [{'BACKEND': 'django.template.backends.django.DjangoTemplates', 'DIRS': [], 'APP_DIRS': True, 'OPTIONS': {'context_processors': ['django.template.context_processors.request', 'django.contrib.auth.context_processors.auth', 'django.contrib.messages.context_processors.messages']}}]
+ASGI_APPLICATION = 'dashboard.asgi.application'
+TIME_ZONE = 'America/Chicago'
+USE_TZ = True
+LANGUAGE_CODE = 'en-us'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 14}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Strict'
+SESSION_COOKIE_SECURE = not LOCAL_ONLY
+CSRF_COOKIE_SECURE = not LOCAL_ONLY
+SESSION_COOKIE_AGE = 3600
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SECURE_SSL_REDIRECT = not LOCAL_ONLY
+SECURE_HSTS_SECONDS = 31536000 if not LOCAL_ONLY else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# Keep same-site form origins available to CSRF checks while withholding
+# referrers from other sites. Chrome sends Origin: null with no-referrer forms.
+SECURE_REFERRER_POLICY = 'same-origin'
+X_FRAME_OPTIONS = 'DENY'
+# Enable only behind a controlled proxy that removes incoming forwarded headers.
+if os.getenv('DASHBOARD_TRUST_PROXY') == '1':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_TRUSTED_ORIGINS = [s for s in os.getenv('DASHBOARD_CSRF_ORIGINS', '').split(',') if s]
+DATA_UPLOAD_MAX_MEMORY_SIZE = 65536
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 32
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+# No email, telemetry, crash reports, request-body logs or private media route.
+EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+LOGGING = {'version': 1, 'disable_existing_loggers': True, 'handlers': {'null': {'class': 'logging.NullHandler'}}, 'root': {'handlers': ['null']}}
+
+WHITENOISE_MAX_AGE = 0
+
+# Optional dedicated personal issuer inside this application. Existing external
+# JWT mode stays the default and no endpoint is activated by installing the library.
+HEALTH_OAUTH_ENABLED = os.getenv('MCP_AUTH_MODE', 'external') == 'builtin'
+HEALTH_OAUTH_ORIGIN = os.getenv('MCP_PUBLIC_ORIGIN', '').rstrip('/')
+HEALTH_OAUTH_RESOURCE = HEALTH_OAUTH_ORIGIN + '/mcp'
+HEALTH_OAUTH_WRITES = os.getenv('MCP_WRITES_ENABLED', '0') == '1'
+if HEALTH_OAUTH_ENABLED:
+    from urllib.parse import urlsplit
+    origin = urlsplit(HEALTH_OAUTH_ORIGIN)
+    local_origin = LOCAL_ONLY and origin.scheme == 'http' and origin.hostname in {'localhost', '127.0.0.1', '::1'}
+    if (not origin.hostname or origin.username or origin.password or origin.path or origin.query or origin.fragment
+            or (origin.scheme != 'https' and not local_origin)):
+        raise ImproperlyConfigured('MCP_PUBLIC_ORIGIN must be an HTTPS origin, or explicit local loopback HTTP.')
+    if LOCAL_ONLY and origin.hostname not in {'localhost', '127.0.0.1', '::1'}:
+        raise ImproperlyConfigured('Local mode cannot advertise a public OAuth origin.')
+    if any(os.getenv(name) for name in ('MCP_ISSUER_URL', 'MCP_JWKS_URL', 'MCP_RESOURCE_URL', 'MCP_SUBJECT')):
+        raise ImproperlyConfigured('Choose built in or external MCP authentication, not both.')
+    if os.getenv('MCP_WRITES_ENABLED', '0') not in {'0', '1'}:
+        raise ImproperlyConfigured('MCP_WRITES_ENABLED must be 0 or 1.')
+
+OAUTH2_PROVIDER = {
+    'OIDC_ENABLED': False,
+    'OIDC_ISS_ENDPOINT': HEALTH_OAUTH_ORIGIN,
+    'SCOPES': {'health:read': 'Read your private tracking history and requested photos',
+               **({'health:write': 'Save explicitly authorized measurements, corrections and reviews'} if HEALTH_OAUTH_WRITES else {})},
+    'DEFAULT_SCOPES': ['health:read'],
+    'OAUTH2_VALIDATOR_CLASS': 'dashboard.oauth.OwnerOAuthValidator',
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 900,
+    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 60,
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 30*86400,
+    'ROTATE_REFRESH_TOKEN': True,
+    'REFRESH_TOKEN_REUSE_PROTECTION': True,
+    'REFRESH_TOKEN_GRACE_PERIOD_SECONDS': 0,
+    'PKCE_REQUIRED': True,
+    'REQUEST_APPROVAL_PROMPT': 'force',
+    'ALLOWED_REDIRECT_URI_SCHEMES': ['https'],
+    'ALLOW_URI_WILDCARDS': False,
+    'OAUTH2_RESPONSE_TYPES_SUPPORTED': ['code'],
+    'OAUTH2_GRANT_TYPES_SUPPORTED': ['authorization_code', 'refresh_token'],
+    'OAUTH2_TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED': ['none', 'client_secret_basic', 'client_secret_post'],
+    'DCR_ENABLED': False,
+    'CIMD_ENABLED': HEALTH_OAUTH_ENABLED,
+    'CIMD_ALLOWED_HOSTS': ['chatgpt.com'],
+    'CIMD_REGISTRATION_PERMISSION_CLASSES': ['oauth2_provider.cimd.HostAllowlistCIMDPermission'],
+    **{'COMPLIANT_BCP_RFC9700_'+name: True for name in (
+        'IMPLICIT_GRANT', 'PASSWORD_GRANT', 'PKCE_METHOD', 'ACCESS_TOKEN_TRANSPORT',
+        'AUTHZ_RESPONSE_ISS', 'TOKEN_STORAGE', 'REFRESH_TOKEN', 'REDIRECT_URI_SCHEME',
+        'REDIRECT_URI_MATCHING', 'PKCE_REQUIRED')},
+}
+
+# Outbound Oura access is separate from inbound ChatGPT OAuth. Disabled by default.
+OURA_ENABLED = os.getenv('OURA_ENABLED', '0') == '1'
+OURA_CLIENT_ID = os.getenv('OURA_CLIENT_ID', '')
+OURA_CLIENT_SECRET_FILE = os.getenv('OURA_CLIENT_SECRET_FILE', '')
+OURA_TOKEN_KEY_FILE = os.getenv('OURA_TOKEN_KEY_FILE', '')
+OURA_REDIRECT_URI = os.getenv('OURA_REDIRECT_URI', '')

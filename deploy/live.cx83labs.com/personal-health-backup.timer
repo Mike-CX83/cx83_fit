@@ -1,0 +1,12 @@
+# Prepared only; no schedule is enabled by local preparation.
+[Unit]
+Description=Daily encrypted private dashboard backup
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 America/Chicago
+RandomizedDelaySec=15min
+Persistent=true
+Unit=personal-health-backup.service
+
+[Install]
+WantedBy=timers.target

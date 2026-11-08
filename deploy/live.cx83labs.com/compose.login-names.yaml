@@ -1,0 +1,9 @@
+# Live login names for the single owner account.
+# These read-only mounts apply the alias backend without rebuilding the pinned image.
+# Drop this file once a later image already contains dashboard/auth.py.
+services:
+  app:
+    volumes:
+      - /opt/personal-health-dashboard/dashboard/auth.py:/app/dashboard/auth.py:ro
+      - /opt/personal-health-dashboard/dashboard/settings.py:/app/dashboard/settings.py:ro
+      - /opt/personal-health-dashboard/tracking/templates/registration/login.html:/app/tracking/templates/registration/login.html:ro

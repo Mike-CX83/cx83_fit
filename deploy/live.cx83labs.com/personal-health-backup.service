@@ -1,0 +1,16 @@
+[Unit]
+Description=Encrypted private dashboard backup to Google Drive
+Requires=docker.service
+After=docker.service
+ConditionPathExists=/opt/personal-health-dashboard/secrets/backup/rclone/rclone.conf
+ConditionPathExists=/opt/personal-health-dashboard/secrets/backup/restic-password
+
+[Service]
+Type=oneshot
+UMask=0077
+WorkingDirectory=/opt/personal-health-dashboard
+ExecStartPre=/usr/bin/docker --host unix:///var/run/docker.sock volume inspect --format {{.Name}} personal-health-dashboard_personal-health-data
+ExecStart=/usr/bin/docker --host unix:///var/run/docker.sock compose --project-directory /opt/personal-health-dashboard -p personal-health-dashboard -f /opt/personal-health-dashboard/compose.yaml -f /opt/personal-health-dashboard/deploy/live.cx83labs.com/compose.override.yaml -f /opt/personal-health-dashboard/deploy/live.cx83labs.com/compose.release.yaml -f /opt/personal-health-dashboard/deploy/live.cx83labs.com/compose.backup.yaml --profile backup run --rm --no-deps --pull never backup
+TimeoutStartSec=45min
+StandardOutput=journal
+StandardError=journal

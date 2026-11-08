@@ -1,0 +1,12 @@
+# Review fragment only. Merge into Coolify's saved Proxy > Configuration.
+# Never replace the full proxy configuration with this fragment.
+# Keep every existing service, option, mount, label and network intact.
+services:
+  traefik:
+    networks:
+      - coolify
+      - vaultstorage-pilot_default
+      - personal-health-ingress
+networks:
+  personal-health-ingress:
+    external: true

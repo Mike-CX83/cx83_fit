@@ -1,0 +1,51 @@
+# Prepared only. Install credentials/tools and authorize server execution first.
+services:
+  backup:
+    profiles: [backup]
+    platform: linux/amd64
+    image: sha256:67f557de8420e512fdda94ffcc80c260677843a6e0245aa8d90d5b3adf956ee1
+    pull_policy: never
+    command: [python, /ops/backup.py, backup, --private-root, /data,
+      --repository, "rclone:health_dashboard_backup:cx83-personal-health-dashboard/restic",
+      --restic, /run/tools/restic, --rclone, /run/tools/rclone,
+      --rclone-config, /run/rclone/rclone.conf, --password-file, /run/secrets/restic-password]
+    volumes:
+      - personal-health-data:/data
+      - type: bind
+        source: ./scripts/backup.py
+        target: /ops/backup.py
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ./tools/restic
+        target: /run/tools/restic
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ./tools/rclone
+        target: /run/tools/rclone
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ./secrets/backup/rclone
+        target: /run/rclone
+        bind: {create_host_path: false}
+      - type: bind
+        source: ./secrets/backup/restic-password
+        target: /run/secrets/restic-password
+        read_only: true
+        bind: {create_host_path: false}
+    networks: [personal-health-backup]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
+    mem_limit: 384m
+    cpus: 0.5
+    restart: "no"
+    logging:
+      driver: local
+      options: {max-size: 1m, max-file: "2"}
+networks:
+  personal-health-backup: {}

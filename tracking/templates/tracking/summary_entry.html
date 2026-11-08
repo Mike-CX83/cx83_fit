@@ -1,0 +1,6 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<section class="panel"><p class="eyebrow">{{ title }}</p><h1>{% if editing %}Correct{% else %}Add{% endif %} a reviewed record</h1>
+<p>Enter values from a source you reviewed. Unknown is different from zero. This saves a personal tracking copy and does not change a provider record.</p>
+{% if kind == 'nutrition' %}<p>Enter a daily summary, not individual foods. Mark partial diaries as partial. Net carbohydrates are calculated only when total carbohydrates and fiber are both known and consistent.</p>{% elif kind == 'recovery' %}<p>Use the sleep date assigned by the source. Enter sleep duration in minutes. HRV must retain its method and device; do not combine incompatible baselines.</p>{% elif kind == 'activity' %}<p>Use one source for each daily record. Watch, phone and ring records stay separate and are never added together automatically.</p>{% else %}<p>Keep the source's test name, value, unit and reference range. Reference ranges are displayed as supplied. This app does not interpret results or provide medical advice.</p>{% endif %}
+<form method="post">{% csrf_token %}{{ form.as_p }}<button>Save reviewed record</button> <a href="{% url 'summary_list' kind %}">Cancel</a></form></section>
+{% endblock %}

@@ -1,0 +1,8 @@
+{
+  "repository": "rclone:health_dashboard_backup:cx83-personal-health-dashboard/synthetic-check-20261107-44e79a13",
+  "synthetic_only": true,
+  "stage": "passed",
+  "snapshot_id": "5b3a8b8cf94d78ba78c98dc8b229addeaf1760f21955bba1e7a5c81a5f5d53d2",
+  "completed_date": "2026-11-07",
+  "execution_host": "Mac"
+}

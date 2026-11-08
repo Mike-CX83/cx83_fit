@@ -1,0 +1,11 @@
+.env
+.env.*
+secrets/
+private/
+runtime/
+*.sqlite
+*.sqlite3
+*.pem
+*.key
+__pycache__/
+*.pyc

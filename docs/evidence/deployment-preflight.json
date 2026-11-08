@@ -1,0 +1,37 @@
+{
+  "inspected_at_utc": "2026-11-06T20:14:46Z",
+  "host": "vaultstorage-pilot",
+  "address": "157.245.247.90",
+  "preflight_exit": 0,
+  "unknown_checks": 0,
+  "review_items": 0,
+  "available_memory": "1.7 GiB",
+  "swap_used": "1.0 GiB",
+  "free_disk": "60 GiB",
+  "inode_use_percent": 5,
+  "existing_running_containers": 19,
+  "dashboard_path_exists": false,
+  "dashboard_port_18170_in_use": false,
+  "dashboard_dns_resolved": false,
+  "standalone_services": {
+    "oura-personal": {
+      "active": true,
+      "enabled": true,
+      "automatic_restarts": 0
+    },
+    "myfitnesspal-personal": {
+      "active": true,
+      "enabled": true,
+      "automatic_restarts": 0
+    }
+  },
+  "proxy_image": "traefik:v3.6",
+  "coolify_image": "coollabsio/coolify:4.3.23",
+  "proxy_networks": [
+    "coolify",
+    "vaultstorage-pilot_default"
+  ],
+  "proxy_configuration_sha256": "c3bcbca689a051b2a683b00eea67463a8d13c2a7b86e07481ce219599c6123ba",
+  "restic_installed_on_host": false,
+  "production_changes": 0
+}

@@ -1,0 +1,8 @@
+{% extends 'tracking/base.html' %}{% load static %}{% block content %}
+<h1>Trends</h1><p>Recorded observations only. Sources, units, measurement locations and HRV methods stay separate. Blank dates are unknown.</p>
+<form method="get" class="panel filter-form">{{ form.as_p }}<button>Show observations</button></form>
+{% if form.cleaned_data.synthetic %}<p class="notice">Synthetic tests are included and labeled separately.</p>{% endif %}
+{% if result %}<section class="panel"><h2>{{ result.title }}</h2><p>{{ result.count }} observations. {% if result.truncated %}Limited to the first 2000 records; narrow the date range.{% endif %}</p>
+{% if result.count %}<div class="chart-container"><canvas id="trend-chart" role="img" aria-label="{{ result.title }} observations by date. Exact values are listed below."></canvas></div>{{ result|json_script:'trend-data' }}<script src="{% static 'tracking/vendor/chart.umd.min.js' %}" defer></script><script src="{% static 'tracking/trends.js' %}" defer></script>{% else %}<p>No observations for this selection.</p>{% endif %}</section>
+<section class="panel"><h2>Recorded values</h2>{% for row in result.rows %}<article><div>{{ row.date|date:'Y-m-d' }}<p>{{ row.source }}</p></div><strong>{{ row.value }} {{ row.unit }}</strong></article>{% empty %}<p>Nothing recorded.</p>{% endfor %}</section>{% endif %}<a href="/">Back to overview</a>
+{% endblock %}
