@@ -1,5 +1,15 @@
 # Cursor continuation handoff
 
+## Continuity, writes, and governing document, November 8, 2026, 2:26 AM CST
+
+Pre-migration backup snapshot `f7e36b03659898b419c15c8b73f40ca7f85bb256ea5cf05ce57d87acaf2d9655`. Then published memory, morning and evening check-ins, optional scores, and the private governing document. Server commit `564b06b`. Migration `tracking.0008_journal_continuity` applied. The app container was recreated (`ad48d4a2e237`, start `2026-11-08T08:26:06Z`) so `MCP_WRITES_ENABLED=1`. Shared proxy start remains `2026-10-10T17:40:21Z`. Twenty containers stayed up. Oura, MyFitnessPal, and the backup timer stayed active. `OURA_ENABLED` stays 0 because the server has no Oura client secret or token key. Journal row count stayed 0.
+
+Live checks: anonymous `/login/` returned 200, anonymous `/mcp` returned 401, and owner `/journal/` shows Check proposal. OAuth metadata advertises `health:read`, `health:write`, and `site:write`. The governing document is mounted for authorized reads and its status call does not include the text. `.venv/bin/python scripts/verify_local.py` passed before the migration: 264 tests, 17 opt-in socket tests skipped.
+
+ChatGPT still has to refresh tools. The current token can use the journal, memory, question, score, and governing tools on `health:read`. Measurement and review writes need a reconnect that grants `health:write`. A Dot voice session can write only when that session can call tools. That voice call has not been tested.
+
+The project skill is `.cursor/skills/personal-health-dashboard/SKILL.md`. The private arsenal catalog had no health or journal skill to reuse.
+
 ## Journal tools published, November 8, 2026, 2:14 AM CST
 
 Published the proposal check and the ChatGPT journal tools to `live.cx83labs.com`. Server commit `abeb443`. App container restarted in place (`51b14e3eef62`, start `2026-11-08T08:13:38Z`). Shared proxy start remains `2026-10-10T17:40:21Z`. Twenty containers stayed up. Oura, MyFitnessPal, and the backup timer stayed active. `MCP_WRITES_ENABLED` stays 0. No new migration. `tracking.0007_journal` was already applied. Journal row count stayed 0.

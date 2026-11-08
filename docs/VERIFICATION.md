@@ -1,5 +1,11 @@
 # Verification checkpoint
 
+## Continuity, writes, and governing document, November 8, 2:26 AM CST
+
+Backup snapshot `f7e36b03659898b419c15c8b73f40ca7f85bb256ea5cf05ce57d87acaf2d9655` completed before the migration. Server commit `564b06b`. Migration `0008_journal_continuity` applied. New app container `ad48d4a2e237` started `2026-11-08T08:26:06Z`. Shared proxy `896e154e5916` still started `2026-10-10T17:40:21Z`. Twenty containers remained. Oura, MyFitnessPal, and the backup timer stayed active. `MCP_WRITES_ENABLED` is 1. `OURA_ENABLED` is 0. `tracking_journalentry` count stayed 0.
+
+Public login returned 200. Anonymous `/mcp` returned 401. Owner `/journal/` returned 200 and contained Check proposal. Metadata scopes are `health:read`, `health:write`, and `site:write`. The mounted governing document reports available with version `2026.11.08`, and the status call does not include its text. Local `verify_local.py` passed with 264 tests and 17 skipped socket tests before this release. No ChatGPT reconnect and no Dot voice tool call were performed.
+
 ## Journal tools published, November 8, 2:14 AM CST
 
 Server commit `abeb443`. App container `51b14e3eef62` restarted at `2026-11-08T08:13:38Z`. Shared proxy `896e154e5916` still started `2026-10-10T17:40:21Z`. Twenty containers remained. `oura-personal.service`, `myfitnesspal-personal.service`, and `personal-health-backup.timer` stayed active. `MCP_WRITES_ENABLED` stayed 0. Live migrations are `0001` through `0007_journal`. No new migration ran. `tracking_journalentry` count stayed 0.
