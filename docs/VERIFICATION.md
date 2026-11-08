@@ -1,5 +1,15 @@
 # Verification checkpoint
 
+## Headspace and Holding Space, November 8, 4:21 AM CST
+
+Migration `tracking.0010_holding_space` applied after `personal-health-backup.service` returned success. App container `933f44f1a1eb` restarted at `2026-11-08T10:21:35Z`. `OURA_ENABLED` remains 0. `SMS_ENABLED` is unset and the app reports texting is not configured. Partner count 0. Message count 0. No text was sent. Standalone `oura-personal.service` remained active since `2026-11-06 19:49:57 UTC`. Shared proxy start remains `2026-10-10T17:40:21Z`.
+
+Owner `/` contains Headspace and does not contain Your Headroom. Owner `/holding/` contains Holding Space, Add Partner, name and number fields, and "The app number is not set up yet." Local tests `tests.test_holding` and `tests.test_headroom` passed, 12 tests. A disposable browser at 390px and 1440px saved a synthetic partner and showed Not sent after Reach Out, with no horizontal overflow. This was not a real text and not a physical phone check.
+
+## Direct Oura disabled on the live dashboard, November 8, 3:53 AM CST
+
+App container `933f44f1a1eb` started `2026-11-08T09:53:00Z`. Effective `OURA_ENABLED` is 0. Django `settings.OURA_ENABLED` is false and `configured()` is false. Owner `/integrations/oura/` returned 200, contains "Oura is not configured.", and does not contain "Connect Oura" or "Oura setup is enabled." Personal accounts, sync runs, successful syncs, and stored Oura records are 0. No sync was run. Client id, client secret, and token key remain installed and mounted. Standalone `oura-personal.service` remained active since `2026-11-06 19:49:57 UTC`. Shared proxy start remains `2026-10-10T17:40:21Z`. This is not a connected Oura account. The ChatGPT transfer from standalone Oura is still not implemented.
+
 ## Oura server setup ready, November 8, 3:47 AM CST
 
 App container `a10f91a0cf70` started `2026-11-08T09:47:13Z`. Shared proxy start remains `2026-10-10T17:40:21Z`. `OURA_ENABLED` is 1 and the redirect matches `https://live.cx83labs.com/integrations/oura/callback/`. Inside the app, both secret files are mode 400, UID 10001, and readable. The requested scope list is the nine official scopes and does not include `stress`. Anonymous `/integrations/oura/` redirects to login. After owner sign-in the page contains "Oura setup is enabled.", "Connect Oura", and "No Oura account has been authorized." No authorization was completed in this step and no ingestion was run. This is not a connected Oura account.

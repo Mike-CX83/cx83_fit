@@ -71,15 +71,23 @@ Prepare a narrow release, migration/rollback procedure, encrypted restore proof,
 
 ## Later, not started
 
-Steady is the working name direction for the app. The current product name stays CX83 Fit until a rename is chosen. Your Headroom is the dashboard display of Daily State and is already separate from the items below. Do not start these phases from this note.
+Steady is the working name direction for the app. The current product name stays CX83 Fit until a rename is chosen. Mike selected **Headspace** as the section name on November 8, 2026, replacing the displayed **Your Headroom** label when implemented. This naming decision does not change the Daily State calculation. Do not start these phases from this note.
 
 ### AI check-ins inside the web app
 
 A later phase can put AI in the web app to review stored metrics and Headroom trends more than once a day. It can notice a meaningful change, explain the factors already on file, and suggest a practical next step. Frequency and data permissions have to be chosen by the user. A source that is not connected and authorized stays out, including private messages. There is no AI inside the app in the current phase. ChatGPT remains a separate connection.
 
-### Accountability partners and text alerts
+### Holding Space tab and partner text messaging
 
-A later phase can let the user invite a trusted person. Both people have to opt in before any text is sent. The user chooses the Headroom threshold, the recipients, and what the text is allowed to say. A score under that threshold can ask the partner to reach out. The trigger stays on the defined Daily State bands. AI may help explain a pattern later, and it must not change the threshold, add a recipient, or add detail the user did not allow.
+Requested by Mike on November 8, 2026. The Holding Space tab stores up to five partners, each with a name and a phone number. Add Partner saves a person. Reach Out texts only the people the owner selects, from a dedicated app number, not a personal phone. The manual message is fixed and discreet. Automatic threshold alerts are still not built. A real text cannot be sent until the app number is installed. No number was purchased and no text was sent.
+
+Send real SMS from the web app's backend through a messaging provider using a dedicated virtual number. It must not require Mike's personal phone number as the sender or a separate physical phone. Recipients receive ordinary texts at their phone numbers. Twilio is a candidate, not a selected or provisioned service. Provider setup, costs, sender configuration, and reply handling remain implementation decisions. No subscription, number purchase, or message sending is authorized by this planning note.
+
+Proposed default message: "Mike could use a check in. Do you have a moment to connect?" Let the owner review the recipients and message before a manual send. Keep automatic threshold alerts as a separate optional capability described below. Do not mark a partner as actively holding space merely because a text was sent; an acknowledgment is required.
+
+Acceptance: the sixth active partner cannot be added; partners can be edited or removed; only selected, opted-in recipients receive a manual request; retries do not duplicate messages; sending failures are visible; provider acceptance, delivery, and partner acknowledgment are separate states. The tab and the manual send path are implemented. Synthetic checks passed. A real text still needs the dedicated app number. Automatic alerts below are not built.
+
+A later phase can add optional automatic alerts to Holding Space. Both people have to opt in before any text is sent. The user chooses the Headspace threshold, the recipients, and what the text is allowed to say. A score under that threshold can ask the partner to reach out. The trigger stays on the defined Daily State bands. AI may help explain a pattern later, and it must not change the threshold, add a recipient, or add detail the user did not allow.
 
 Repeated alerts, brief moves around the threshold, and missing or stale data need a pause or a cooldown so one thin day does not spam anyone. The user can pause alerts, remove a partner, and revoke sharing. The partner can unsubscribe. The default text stays discreet: no addiction history, no private conversation, and no detailed health record. A low score is a request to connect. It is not proof of a relapse and it is not an emergency alert. No text is sent in the current phase.
 

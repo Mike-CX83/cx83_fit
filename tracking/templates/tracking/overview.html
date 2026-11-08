@@ -1,14 +1,14 @@
 {% extends 'tracking/base.html' %}{% block content %}
 <nav class="date-strip" aria-label="Day">
-  <a class="date-nav" href="?day={{ prev_day|date:'Y-m-d' }}{% if synthetic %}&amp;synthetic=1{% endif %}" aria-label="Previous day">‹</a>
+  <a class="date-nav" href="?day={{ prev_day|date:'Y-m-d' }}{% if synthetic %}&amp;synthetic=1{% endif %}" aria-label="Previous day"><svg viewBox="0 0 24 24"><path d="M14.5 6 8.5 12l6 6"/></svg></a>
   <h1 class="page-title date-title">{{ day|date:'D, M j' }}</h1>
-  {% if next_day %}<a class="date-nav" href="?day={{ next_day|date:'Y-m-d' }}{% if synthetic %}&amp;synthetic=1{% endif %}" aria-label="Next day">›</a>{% else %}<span class="date-nav is-disabled" aria-hidden="true">›</span>{% endif %}
+  {% if next_day %}<a class="date-nav" href="?day={{ next_day|date:'Y-m-d' }}{% if synthetic %}&amp;synthetic=1{% endif %}" aria-label="Next day"><svg viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></svg></a>{% else %}<span class="date-nav is-disabled" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></svg></span>{% endif %}
 </nav>
 
-<section class="headroom{% if headroom.status == 'running_low' %} is-low{% elif headroom.status == 'stretched' %} is-stretched{% endif %}" aria-label="Your Headroom">
+<section class="headroom{% if headroom.status == 'running_low' %} is-low{% elif headroom.status == 'stretched' %} is-stretched{% endif %}" aria-label="Headspace">
   <div class="headroom-grid">
     <div>
-      <p class="hero-label">Your Headroom</p>
+      <p class="hero-label">Headspace</p>
       <p class="hero-value">{% if headroom.score %}{{ headroom.score }}{% else %}—{% endif %} <span class="headroom-status">{{ headroom.status_label }}</span></p>
       <p class="hero-sub">{{ headroom.scale }}</p>
       <p>{{ headroom.summary }}</p>
@@ -45,30 +45,33 @@
 
 <div class="chip-row">
 {% for chip in metrics.chips %}
-  <section class="metric-chip{% if chip.attention %} is-attention{% endif %}">
+  <section class="metric-chip{% if chip.protein %} is-protein{% endif %}{% if chip.attention %} is-attention{% endif %}">
     <p class="chip-label">{{ chip.label }}</p>
     {% if chip.logged %}
       <p class="chip-value">{{ chip.value }}{% if chip.unit %} <span>{{ chip.unit }}</span>{% endif %}</p>
-      {% if chip.goal %}<p class="chip-sub">/ {{ chip.goal }}</p>{% elif chip.sub %}<p class="chip-sub">{{ chip.sub }}</p>{% endif %}
-      {% if chip.bar != None %}
-        <div class="goal-bar thin{% if chip.protein %} protein{% endif %}{% if chip.attention %} attention{% endif %}"><span style="width:{{ chip.bar|floatformat:0 }}%"></span></div>
-      {% endif %}
+      <p class="chip-sub">{% if chip.goal %}/ {{ chip.goal }}{% elif chip.sub %}{{ chip.sub }}{% else %}&nbsp;{% endif %}</p>
+      {% if chip.bar != None %}<div class="goal-bar thin{% if chip.protein %} protein{% endif %}{% if chip.attention %} attention{% endif %}"><span style="width:{{ chip.bar|floatformat:0 }}%"></span></div>{% endif %}
     {% else %}
       <p class="chip-value muted">—</p>
-      {% if chip.goal %}<p class="chip-sub">goal {{ chip.goal }}</p>{% endif %}
+      <p class="chip-sub">{% if chip.goal %}goal {{ chip.goal }}{% else %}&nbsp;{% endif %}</p>
     {% endif %}
   </section>
 {% endfor %}
 </div>
 
-<p class="checkin-line">{% if metrics.checkin %}Check-in saved{% else %}No check-in yet{% endif %}</p>
-<p class="checkin-line"><a href="{% url 'clinical' %}">Labs, meds, diagnoses</a></p>
+<nav class="jump-row" aria-label="Shortcuts">
+  <a href="{% url 'diary' %}?local_date={{ day|date:'Y-m-d' }}">Log food <span class="jump-mark">+</span></a>
+  <a href="{% url 'journal' %}">Journal <span class="jump-mark">›</span></a>
+  <a href="{% url 'measurement_new' %}">Weight <span class="jump-mark">+</span></a>
+  <a href="{% url 'progress' %}">Progress <span class="jump-mark">›</span></a>
+</nav>
+<p class="quiet checkin-line">{% if metrics.checkin %}Check-in saved{% else %}No check-in yet{% endif %} · <a href="{% url 'clinical' %}">Labs, meds, diagnoses</a></p>
 <div class="meal-board">
 {% for section in metrics.meal_sections %}
 <section class="meal-block">
   <div class="meal-head">
     <h2>{{ section.label }}</h2>
-    <a class="add-link" href="{% url 'diary' %}?local_date={{ day|date:'Y-m-d' }}&amp;meal={{ section.key }}">Add</a>
+    <a class="plus" href="{% url 'diary' %}?local_date={{ day|date:'Y-m-d' }}&amp;meal={{ section.key }}" aria-label="Add {{ section.label|lower }}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></a>
   </div>
   {% for meal in section.items %}
     <article class="meal-row">
@@ -76,7 +79,7 @@
       <div class="meal-nums">{% if meal.calories %}<strong>{{ meal.calories }}</strong>{% endif %}{% if meal.protein_g %}<p>{{ meal.protein_g }}g P</p>{% endif %}</div>
     </article>
   {% empty %}
-    <p class="empty-meal">Nothing logged. <a class="add-link" href="{% url 'diary' %}?local_date={{ day|date:'Y-m-d' }}&amp;meal={{ section.key }}">Add food</a></p>
+    <p class="empty-meal"><a href="{% url 'diary' %}?local_date={{ day|date:'Y-m-d' }}&amp;meal={{ section.key }}">Add food</a></p>
   {% endfor %}
 </section>
 {% endfor %}

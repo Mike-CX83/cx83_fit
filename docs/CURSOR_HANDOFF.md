@@ -1,5 +1,37 @@
 # Cursor continuation handoff
 
+## Headspace and Holding Space, November 8, 2026, 4:21 AM CST
+
+Today's check-in block is named Headspace. The number is still Daily State. Holding Space is a tab at `/holding/` with room for five people. Each person has a name and a phone number. Add Partner saves them. Reach Out texts only the selected people who have not opted out. The message is "Mike could use a check in. Do you have a moment to connect? Reply STOP to opt out." It does not include a score or a health record. Reply STOP opts that number out. A repeated request does not send twice.
+
+The app number is not installed. `SMS_ENABLED` is unset, so Reach Out records "Not sent" and does not call a provider. No Twilio account was purchased and no text was sent. Automatic threshold alerts are not built.
+
+Live checks: owner `/` shows Headspace and not Your Headroom. Owner `/holding/` shows Add Partner, the name and number fields, and the missing-number notice. Partner and message counts are 0. Migration `tracking.0010_holding_space` applied after a successful backup. App container `933f44f1a1eb` restarted at `2026-11-08T10:21:35Z`. `OURA_ENABLED` stays 0. Standalone `oura-personal.service` stayed active since `2026-11-06 19:49:57 UTC`. Shared proxy start remains `2026-10-10T17:40:21Z`.
+
+Local tests `tests.test_holding` and `tests.test_headroom` passed, 12 tests. A disposable phone and laptop browser saved a synthetic partner, showed the number, and Reach Out stayed Not sent. No horizontal overflow.
+
+## Headspace and Holding Space feature request, November 8, 2026, 4:12 AM CST
+
+Mike selected **Headspace** as the check in section name, replacing **Your Headroom** without changing the Daily State calculation. He requested a separate **Holding Space** tab with up to **five partners**, **Add Partner**, and a **Reach Out** action to text selected partners. The web app should use a dedicated virtual sender number through an SMS provider, without using Mike's personal phone as the sender or requiring another physical phone. Twilio is a candidate only. Record this as planned work, not implemented messaging. No messages were sent or provider account purchased.
+
+The specification and acceptance criteria are in [the phase plan](journal-intelligence-handoff/06-PHASES-AND-ACCEPTANCE.md#holding-space-tab-and-partner-text-messaging). Manual requests and optional automatic threshold alerts are separate. Preserve partner opt in, owner control of recipients and message content, and distinct sent, delivered, and acknowledged states. This request adds the feature to the plan; it does not authorize sending real texts.
+
+## Direct Oura disabled on the live dashboard, November 8, 2026, 3:53 AM CST
+
+The effective dashboard setting is `OURA_ENABLED=0`. The app container was recreated (`933f44f1a1eb`, start `2026-11-08T09:53:00Z`). Django reports the setting false and direct authorization unavailable. Owner `/integrations/oura/` says Oura is not configured and does not show Connect Oura. Personal Oura accounts, sync runs, successful syncs, and stored Oura records are all 0. No sync was run.
+
+The registration remains available as a disabled backup. `OURA_CLIENT_ID` is still set. The client secret and token key are still mode 400, owned by UID 10001, and still mounted. The redirect remains `https://live.cx83labs.com/integrations/oura/callback/`. Standalone `oura-personal.service` stayed active, running since `2026-11-06 19:49:57 UTC`. Shared proxy start remains `2026-10-10T17:40:21Z`. Twenty containers stayed up. MyFitnessPal and the business account were not touched.
+
+The primary path is still standalone Oura, then ChatGPT, then the dashboard. That transfer is not implemented or verified. This app is not connected to Oura.
+
+## Direct Oura backup only, November 8, 2026, 3:51 AM CST
+
+Mike clarified that the primary intended path is existing standalone Oura to ChatGPT to the private dashboard. Keep the new dashboard Oura registration, client credentials, and token encryption key as a disabled backup. Do not ask Mike to authorize the direct dashboard app or run its first sync. The assistant-mediated import still requires implementation and end-to-end verification; the synthetic journal test does not prove Oura ingestion.
+
+The local `deploy/live.cx83labs.com/compose.oura.yaml` now explicitly sets `OURA_ENABLED` to `0`. LIVE CHANGE STILL REQUIRED: set it to `0` in the effective server configuration, including any overriding Compose file, and recreate only the dashboard app. Preserve the dedicated credentials and key. Leave the standalone Oura service, its tokens, MyFitnessPal, shared proxy, and business account untouched. Verify the effective Django setting is false, direct authorization is unavailable, and no dashboard Oura account or successful sync exists. Record the result before claiming disabled.
+
+ChatGPT could not apply the live environment change because SSH to the server was blocked (`Operation not permitted`). Its authenticated dashboard overview confirmed `configured: true`, `connected: false`, `last_successful_sync: null`, and `accounts: []`. This note supersedes the next section's instruction to proceed with direct authorization. No live disabling has been claimed.
+
 ## Oura server setup ready, November 8, 2026, 3:47 AM CST
 
 Credentials for the dashboard registration are installed only on `live.cx83labs.com`. `OURA_CLIENT_ID` is in the server environment. The client secret and a new Fernet token key are mode 400, owned by UID 10001, outside the data volume. An existing key was not overwritten. `OURA_ENABLED` is 1. The redirect is `https://live.cx83labs.com/integrations/oura/callback/`. Requested scopes are `email personal daily heartrate workout tag session spo2 heart_health`. The `stress` scope is not requested. The app container was recreated (`a10f91a0cf70`, start `2026-11-08T09:47:13Z`). Shared proxy start remains `2026-10-10T17:40:21Z`. Twenty containers stayed up. The app can read both secret files. Owner `/integrations/oura/` returned 200, says setup is enabled, and shows Connect Oura. No Oura account is authorized yet. Ingestion has not been run. Do not call it connected.

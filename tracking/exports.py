@@ -15,7 +15,8 @@ from django.views.decorators.http import require_http_methods
 
 from .models import (Measurement, SummaryRecord, ProgressPhoto, NutritionTargets, ReviewNote,
                      DietEntry, ClinicalItem, JournalEntry, JournalObservation, JournalCorrection,
-                     JournalMemory, JournalQuestion, JournalScore, SobrietyDay)
+                     JournalMemory, JournalQuestion, JournalScore, SobrietyDay,
+                     HoldingPartner, HoldingMessage)
 from .reviews import serialize_review
 from .photos import photo_metadata, photo_names, photo_storage
 from .services import serialize, _owner
@@ -121,6 +122,14 @@ def build_export(owner, include_synthetic=False):
                 'recorded_on': row.recorded_on.isoformat(), 'current': row.current, 'synthetic': row.synthetic,
                 'created_at': _iso(row.created_at),
             } for row in _owned_rows(ClinicalItem, owner, include_synthetic)]
+            data['holding_partners'] = [{
+                'id': str(row.pk), 'name': row.name, 'phone_e164': row.phone_e164,
+                'status': row.status, 'created_at': _iso(row.created_at), 'removed_at': _iso(row.removed_at),
+            } for row in HoldingPartner.objects.filter(owner=owner).order_by('pk')]
+            data['holding_messages'] = [{
+                'id': str(row.pk), 'partner_id': str(row.partner_id), 'state': row.state,
+                'error_code': row.error_code, 'created_at': _iso(row.created_at),
+            } for row in HoldingMessage.objects.filter(owner=owner).order_by('pk')]
             journal_entries = _owned_rows(JournalEntry, owner, include_synthetic)
             data['journal_entries'] = [{
                 'id': str(row.pk), 'channel': row.channel, 'local_date': row.local_date.isoformat(),

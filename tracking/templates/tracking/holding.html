@@ -1,0 +1,42 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<h1 class="page-title">Holding Space</h1>
+<p class="quiet">Up to five people. A text comes from the app number, not your phone.</p>
+<p>{{ message }}</p>
+{% if not sms_ready %}<p class="notice">The app number is not set up yet. You can save people now. Reach Out cannot send until that number exists.</p>{% endif %}
+{% if error %}<p class="notice">{{ error }}</p>{% endif %}
+
+{% if openings %}
+<form method="post" class="stack-form">{% csrf_token %}
+  <input type="hidden" name="action" value="add">
+  <label>Name <input name="name" maxlength="80" required></label>
+  <label>Number <input name="phone" maxlength="20" inputmode="tel" autocomplete="tel" required></label>
+  <button>Add Partner</button>
+</form>
+{% endif %}
+
+{% if partners %}
+<form id="reach-form" method="post">{% csrf_token %}
+  <input type="hidden" name="action" value="reach">
+  <input type="hidden" name="request_id" value="{{ request_id }}">
+  <button>Reach Out</button>
+</form>
+{% for person in partners %}
+<article class="holding-card">
+  <label class="holding-check"><input type="checkbox" name="partner" value="{{ person.id }}" form="reach-form" {% if not person.opted_in %}disabled{% endif %}> Select</label>
+  <form method="post" class="stack-form">{% csrf_token %}
+    <input type="hidden" name="action" value="update">
+    <input type="hidden" name="partner_id" value="{{ person.id }}">
+    <label>Name <input name="name" maxlength="80" value="{{ person.name }}" required></label>
+    <label>Number <input name="phone" maxlength="20" value="{{ person.phone }}" required></label>
+    <button class="secondary" type="submit">Save</button>
+  </form>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="remove">
+    <input type="hidden" name="partner_id" value="{{ person.id }}">
+    <button class="text-button" type="submit">Remove</button>
+  </form>
+  {% if not person.opted_in %}<p class="quiet">Opted out</p>{% elif person.latest %}<p class="quiet">{{ person.latest.label }}</p>{% endif %}
+</article>
+{% endfor %}
+{% else %}<p>No one is here yet.</p>{% endif %}
+{% endblock %}

@@ -462,3 +462,49 @@ class JournalCorrection(models.Model):
 
     class Meta:
         ordering = ['created_at', 'id']
+
+
+class HoldingPartner(models.Model):
+    """A person the owner may text from the app number. Five active people at most."""
+    STATUSES = [('active', 'Active'), ('unsubscribed', 'Unsubscribed')]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name = models.CharField(max_length=80)
+    phone_e164 = models.CharField(max_length=16)
+    status = models.CharField(max_length=16, choices=STATUSES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    removed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['name', 'created_at', 'id']
+        constraints = [models.UniqueConstraint(
+            fields=['owner', 'phone_e164'], condition=models.Q(removed_at__isnull=True),
+            name='holding_active_phone')]
+
+    def display_phone(self):
+        number = self.phone_e164
+        if number.startswith('+1') and len(number) == 12:
+            return f'({number[2:5]}) {number[5:8]}-{number[8:]}'
+        return number
+
+
+class HoldingMessage(models.Model):
+    """One outbound check-in text. The body is the fixed note, not a health record."""
+    STATES = [
+        ('failed', 'Not sent'), ('accepted', 'Sent'),
+        ('delivered', 'Delivered'), ('acknowledged', 'Replied'),
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    partner = models.ForeignKey(HoldingPartner, on_delete=models.CASCADE, related_name='messages')
+    request = models.ForeignKey(WriteRequest, on_delete=models.PROTECT, related_name='holding_messages')
+    body = models.CharField(max_length=320)
+    state = models.CharField(max_length=16, choices=STATES, default='failed')
+    provider_id = models.CharField(max_length=64, blank=True)
+    error_code = models.CharField(max_length=40, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at', 'id']
+        indexes = [models.Index(fields=['owner', 'created_at'], name='holding_message_owner')]

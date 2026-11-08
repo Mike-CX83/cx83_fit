@@ -632,7 +632,7 @@ def create_mcp_app(config: MCPConfig, *, verifier=None):
     @server.tool(annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
         meta={"securitySchemes": [{"type": "oauth2", "scopes": ["health:read"]}]})
     async def read_headroom(local_date: str | None = None, include_synthetic: bool = False) -> dict:
-        """Read Your Headroom for one date. The number is Daily State. Higher means more capacity.
+        """Read Headspace for one date. The number is Daily State. Higher means more capacity.
 
         This does not create a second score, predict a relapse, or fill missing mood, energy,
         focus, sleep, food, or steps. Anger, loneliness, and stress are not collected.

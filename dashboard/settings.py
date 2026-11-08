@@ -160,3 +160,9 @@ OURA_CLIENT_ID = os.getenv('OURA_CLIENT_ID', '')
 OURA_CLIENT_SECRET_FILE = os.getenv('OURA_CLIENT_SECRET_FILE', '')
 OURA_TOKEN_KEY_FILE = os.getenv('OURA_TOKEN_KEY_FILE', '')
 OURA_REDIRECT_URI = os.getenv('OURA_REDIRECT_URI', '')
+
+# Manual Holding Space texts. Disabled until a dedicated app number is installed.
+SMS_ENABLED = os.getenv('SMS_ENABLED', '0') == '1'
+SMS_ACCOUNT_SID = os.getenv('SMS_ACCOUNT_SID', '')
+SMS_FROM_NUMBER = os.getenv('SMS_FROM_NUMBER', '')
+SMS_AUTH_TOKEN_FILE = os.getenv('SMS_AUTH_TOKEN_FILE', '')
