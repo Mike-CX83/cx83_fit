@@ -15,7 +15,7 @@ from django.views.decorators.http import require_http_methods
 
 from .models import (Measurement, SummaryRecord, ProgressPhoto, NutritionTargets, ReviewNote,
                      DietEntry, ClinicalItem, JournalEntry, JournalObservation, JournalCorrection,
-                     JournalMemory, JournalQuestion, JournalScore)
+                     JournalMemory, JournalQuestion, JournalScore, SobrietyDay)
 from .reviews import serialize_review
 from .photos import photo_metadata, photo_names, photo_storage
 from .services import serialize, _owner
@@ -165,6 +165,15 @@ def build_export(owner, include_synthetic=False):
                 'formula_version': row.formula_version, 'result': None if row.result is None else format(row.result, 'f'),
                 'coverage': row.coverage, 'synthetic': row.synthetic,
             } for row in scores]
+            pattern = SobrietyDay.objects.filter(owner=owner).order_by('local_date', 'pk')
+            if not include_synthetic:
+                pattern = pattern.filter(synthetic=False)
+            data['sobriety_pattern'] = [{
+                'local_date': row.local_date.isoformat(), 'formula_version': row.formula_version,
+                'potential': row.potential, 'use_recorded': row.use_recorded, 'wear': row.wear,
+                'drivers': row.drivers, 'run_started': None if row.run_started is None else row.run_started.isoformat(),
+                'days_in_run': row.days_in_run, 'synthetic': row.synthetic,
+            } for row in pattern]
             data['journal_corrections'] = [{
                 'entry_id': str(row.entry_id), 'observation_id': None if row.observation_id is None else str(row.observation_id),
                 'request_id': str(row.request.request_id), 'operation': row.operation,
@@ -242,7 +251,7 @@ def download(request):
     if request.POST.get('confirm_export') != 'yes':
         return HttpResponse('Confirm the private export first.', status=400)
     try:
-        output = build_export(request.user, request.POST.get('include_synthetic')=='yes')
+        output = build_export(request.user, False)
     except (ValueError, OSError):
         return HttpResponse('Export could not be completed. Check private photo storage and the 512 MiB export limit. No partial export was returned.', status=409)
     return private_file_response(request, output, as_attachment=True, filename='private-health-'+timezone.localdate().isoformat()+'.zip')

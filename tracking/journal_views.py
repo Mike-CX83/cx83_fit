@@ -27,6 +27,18 @@ def _boolean(value):
     raise InvalidMeasurement('Choose yes, no, or leave that choice blank.')
 
 
+def _rating(value):
+    if value in (None, ''):
+        return None
+    try:
+        rating = int(value)
+    except (TypeError, ValueError):
+        raise InvalidMeasurement('A rating is a whole number from 0 to 10.') from None
+    if isinstance(value, bool) or not 0 <= rating <= 10:
+        raise InvalidMeasurement('A rating is a whole number from 0 to 10.')
+    return rating
+
+
 def _observation(post):
     if not post.get('domain_id') and not post.get('metric_key') and not post.get('value_state'):
         return None
@@ -36,7 +48,8 @@ def _observation(post):
         raise InvalidMeasurement('Choose a journal domain.') from None
     return {'domain_id': domain_id, 'metric_key': post.get('metric_key', ''),
             'value_state': post.get('value_state', ''), 'narrative': post.get('narrative', ''),
-            'boolean': _boolean(post.get('boolean')), 'subject': 'self'}
+            'boolean': _boolean(post.get('boolean')), 'rating': _rating(post.get('rating')),
+            'subject': 'self'}
 
 
 def _proposals(post):

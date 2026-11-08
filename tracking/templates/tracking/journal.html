@@ -21,6 +21,7 @@
 <p><label>State <select name="value_state"><option value="">None</option>{% for state in states %}<option value="{{ state }}"{% if posted.value_state == state %} selected{% endif %}>{{ state }}</option>{% endfor %}</select></label></p>
 <p><label>Note <textarea name="narrative" maxlength="2000">{{ posted.narrative|default:'' }}</textarea></label></p>
 <p><label>Yes or no <select name="boolean"><option value="">Blank</option><option value="true"{% if posted.boolean == 'true' %} selected{% endif %}>Yes</option><option value="false"{% if posted.boolean == 'false' %} selected{% endif %}>No</option></select></label></p>
+<p><label>Rating, 0 to 10 <input name="rating" inputmode="numeric" maxlength="2" value="{{ posted.rating|default:'' }}"></label></p>
 <p><label>Exact words the proposal relies on <input name="support_span" value="{{ posted.support_span|default:'' }}" maxlength="500"></label></p>
 <p><label>Timing <select name="temporal_scope"><option value="unspecified">Unspecified</option><option value="completed"{% if posted.temporal_scope == 'completed' %} selected{% endif %}>Completed</option><option value="intention"{% if posted.temporal_scope == 'intention' %} selected{% endif %}>Intention</option></select></label></p>
 <p><label><input type="checkbox" name="synthetic" value="on"> Synthetic test entry</label></p>

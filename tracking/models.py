@@ -404,6 +404,30 @@ class JournalQuestion(models.Model):
         indexes = [models.Index(fields=['owner', 'status', 'topic'], name='journal_question_topic')]
 
 
+class SobrietyDay(models.Model):
+    """One recomputed pattern day. A blank day is unknown, not sober."""
+    FORMULA = 'sobriety-pattern-1'
+    POTENTIALS = [('lower', 'Lower'), ('rising', 'Rising'), ('high', 'High'), ('incomplete', 'Incomplete')]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    local_date = models.DateField()
+    formula_version = models.CharField(max_length=32, default=FORMULA)
+    potential = models.CharField(max_length=12, choices=POTENTIALS)
+    use_recorded = models.BooleanField(default=False)
+    wear = models.JSONField(default=dict)
+    drivers = models.JSONField(default=list)
+    coverage = models.JSONField(default=dict)
+    run_started = models.DateField(null=True, blank=True)
+    days_in_run = models.PositiveIntegerField(null=True, blank=True)
+    synthetic = models.BooleanField(default=False)
+    computed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['local_date', 'id']
+        constraints = [models.UniqueConstraint(
+            fields=['owner', 'local_date', 'formula_version', 'synthetic'], name='sobriety_pattern_day')]
+
+
 class JournalScore(models.Model):
     """A versioned personal summary. A null result means the coverage gate was not met."""
     KINDS = [('daily_state', 'Daily state'), ('routine_alignment', 'Routine alignment')]

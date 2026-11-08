@@ -17,6 +17,11 @@ from .models import JournalCorrection, JournalEntry, JournalObservation, WriteRe
 from .services import Conflict, RecordNotFound, _owner, _replay
 
 
+def _refresh_pattern(owner, day, synthetic):
+    from .sobriety_pattern import read_pattern
+    read_pattern(owner, day, include_synthetic=synthetic)
+
+
 def _timezone(value):
     try:
         if not isinstance(value, str) or not value or len(value) > 64:
@@ -132,6 +137,7 @@ def save_journal(owner, body, local_date, request_id, observation=None, *, sourc
                     raise Conflict('This journal entry was deleted. A retry cannot restore it.')
                 return prior
             receipt = WriteRequest.objects.create(owner=owner, request_id=request_id, payload_hash=digest)
+            previous_day = None
             if record_id is None:
                 entry = JournalEntry.objects.create(
                     owner=owner, request=receipt, channel=channel, local_date=day, occurred_at=moment,
@@ -153,6 +159,7 @@ def save_journal(owner, body, local_date, request_id, observation=None, *, sourc
                 entry = JournalEntry.objects.filter(owner=owner, id=record_id, deleted_at__isnull=True).first()
                 if entry is None:
                     raise RecordNotFound('Journal entry not found.')
+                previous_day = entry.local_date
                 if entry.synthetic != synthetic:
                     raise InvalidMeasurement('Synthetic journal entries stay synthetic.')
                 current = _active_observation(entry)
@@ -204,6 +211,9 @@ def save_journal(owner, body, local_date, request_id, observation=None, *, sourc
                     observation_after_version=None if current is None else current.version, changed_fields=names)
             receipt.response = result
             receipt.save(update_fields=['response'])
+            _refresh_pattern(owner, day, synthetic)
+            if previous_day is not None and previous_day != day:
+                _refresh_pattern(owner, previous_day, synthetic)
             return result
     except IntegrityError:
         prior = _replay(owner, request_id, digest)
@@ -253,6 +263,7 @@ def delete_journal(owner, record_id, expected_version, request_id, expected_obse
                 observation_after_version=None if current is None else current.version,
                 changed_fields=['body', 'narrative', 'value_json'])
             _scrub(entry)
+            _refresh_pattern(owner, entry.local_date, entry.synthetic)
             return {'id': str(entry.id), 'deleted': True}
     except (IntegrityError, OperationalError):
         raise Conflict('Storage is busy. Retry the same deletion request.') from None

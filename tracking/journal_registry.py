@@ -7,7 +7,7 @@ diagnosis, or a fact the owner did not submit. Narrative text stays text.
 from .domain import InvalidMeasurement
 
 PROTOCOL_VERSION = 'journal-1'
-REGISTRY_VERSION = 'registry-2'
+REGISTRY_VERSION = 'registry-3'
 
 DOMAINS = {
     12: 'Sobriety',
@@ -54,6 +54,32 @@ METRICS = {
         'domains': frozenset({14}),
         'states': STATES - {'conflicting'},
         'direction': 'positive',
+    },
+    'craving': {
+        'label': 'Craving',
+        'type': 'rating',
+        'domains': frozenset({12}),
+        'states': STATES - {'conflicting'},
+        'direction': 'negative',
+    },
+    'confidence': {
+        'label': 'Confidence to stay sober',
+        'type': 'rating',
+        'domains': frozenset({12}),
+        'states': STATES - {'conflicting'},
+        'direction': 'positive',
+    },
+    'access': {
+        'label': 'Access to getting high',
+        'type': 'boolean',
+        'domains': frozenset({12}),
+        'states': STATES | {'intention'},
+    },
+    'use': {
+        'label': 'Used',
+        'type': 'boolean',
+        'domains': frozenset({12}),
+        'states': STATES | {'intention'},
     },
 }
 
