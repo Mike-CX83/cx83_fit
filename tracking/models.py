@@ -356,6 +356,73 @@ class JournalObservation(models.Model):
         return DOMAINS.get(self.domain_id, 'Recorded')
 
 
+class JournalMemory(models.Model):
+    """Bounded durable context. A hypothesis stays a candidate until the owner confirms it."""
+    KINDS = [('preference', 'Preference'), ('context', 'Context'), ('concern', 'Concern'),
+             ('commitment', 'Commitment'), ('milestone', 'Milestone')]
+    STATUSES = [('candidate', 'Candidate'), ('confirmed', 'Confirmed'), ('active', 'Active'),
+                ('resolved', 'Resolved'), ('superseded', 'Superseded'), ('deleted', 'Deleted')]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    request = models.OneToOneField(WriteRequest, on_delete=models.PROTECT, related_name='journal_memory')
+    kind = models.CharField(max_length=16, choices=KINDS)
+    status = models.CharField(max_length=16, choices=STATUSES, default='active')
+    domain_id = models.PositiveSmallIntegerField(null=True, blank=True)
+    practice_key = models.CharField(max_length=40, blank=True)
+    text = models.TextField(blank=True, max_length=2000)
+    review_on = models.DateField(null=True, blank=True)
+    source_entry = models.ForeignKey(JournalEntry, null=True, blank=True, on_delete=models.SET_NULL, related_name='memories')
+    synthetic = models.BooleanField(default=False)
+    version = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-updated_at', 'id']
+        indexes = [models.Index(fields=['owner', 'status', 'kind'], name='journal_memory_status')]
+
+
+class JournalQuestion(models.Model):
+    """One asked, skipped, or deferred check-in question. Silence is not an answer."""
+    STATUSES = [('asked', 'Asked'), ('answered', 'Answered'), ('skipped', 'Skipped'),
+                ('deferred', 'Deferred'), ('suppressed', 'Suppressed')]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    topic = models.CharField(max_length=80)
+    prompt = models.TextField(max_length=500)
+    reason = models.CharField(max_length=40)
+    status = models.CharField(max_length=16, choices=STATUSES)
+    domain_id = models.PositiveSmallIntegerField(null=True, blank=True)
+    asked_at = models.DateTimeField(null=True, blank=True)
+    next_eligible = models.DateTimeField(null=True, blank=True)
+    synthetic = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at', 'id']
+        indexes = [models.Index(fields=['owner', 'status', 'topic'], name='journal_question_topic')]
+
+
+class JournalScore(models.Model):
+    """A versioned personal summary. A null result means the coverage gate was not met."""
+    KINDS = [('daily_state', 'Daily state'), ('routine_alignment', 'Routine alignment')]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    kind = models.CharField(max_length=24, choices=KINDS)
+    local_date = models.DateField()
+    formula_version = models.CharField(max_length=32)
+    result = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    coverage = models.JSONField(default=dict)
+    input_ids = models.JSONField(default=list)
+    synthetic = models.BooleanField(default=False)
+    computed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(
+            fields=['owner', 'kind', 'local_date', 'formula_version', 'synthetic'], name='journal_score_day')]
+
+
 class JournalCorrection(models.Model):
     """Field names and versions only. Journal text is never copied here."""
     entry = models.ForeignKey(JournalEntry, on_delete=models.CASCADE, related_name='corrections')

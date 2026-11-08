@@ -14,7 +14,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from .models import (Measurement, SummaryRecord, ProgressPhoto, NutritionTargets, ReviewNote,
-                     DietEntry, ClinicalItem, JournalEntry, JournalObservation, JournalCorrection)
+                     DietEntry, ClinicalItem, JournalEntry, JournalObservation, JournalCorrection,
+                     JournalMemory, JournalQuestion, JournalScore)
 from .reviews import serialize_review
 from .photos import photo_metadata, photo_names, photo_storage
 from .services import serialize, _owner
@@ -145,6 +146,25 @@ def build_export(owner, include_synthetic=False):
             corrections = JournalCorrection.objects.filter(entry__in=journal_entries).select_related('request').order_by('pk')
             if corrections.count() > MAX_EXPORT_RECORDS:
                 raise ValueError('Export exceeds the local journal limit. Use an operator backup.')
+            data['journal_memories'] = [{
+                'id': str(row.pk), 'kind': row.kind, 'status': row.status, 'domain_id': row.domain_id,
+                'practice_key': row.practice_key, 'text': None if row.deleted_at else row.text,
+                'review_on': _iso(row.review_on), 'synthetic': row.synthetic, 'version': row.version,
+                'deleted_at': _iso(row.deleted_at),
+            } for row in _owned_rows(JournalMemory, owner, include_synthetic)]
+            data['journal_questions'] = [{
+                'id': str(row.pk), 'topic': row.topic, 'prompt': row.prompt, 'reason': row.reason,
+                'status': row.status, 'domain_id': row.domain_id, 'asked_at': _iso(row.asked_at),
+                'next_eligible': _iso(row.next_eligible), 'synthetic': row.synthetic,
+            } for row in _owned_rows(JournalQuestion, owner, include_synthetic)]
+            scores = JournalScore.objects.filter(owner=owner).order_by('pk')
+            if not include_synthetic:
+                scores = scores.filter(synthetic=False)
+            data['journal_scores'] = [{
+                'id': str(row.pk), 'kind': row.kind, 'local_date': row.local_date.isoformat(),
+                'formula_version': row.formula_version, 'result': None if row.result is None else format(row.result, 'f'),
+                'coverage': row.coverage, 'synthetic': row.synthetic,
+            } for row in scores]
             data['journal_corrections'] = [{
                 'entry_id': str(row.entry_id), 'observation_id': None if row.observation_id is None else str(row.observation_id),
                 'request_id': str(row.request.request_id), 'operation': row.operation,

@@ -24,6 +24,7 @@ TABLES = ('tracking_measurement', 'tracking_correction', 'tracking_summaryrecord
           'oauth2_provider_refreshtoken', 'oauth2_provider_grant',
           'tracking_dietentry', 'tracking_clinicalitem',
           'tracking_journalentry', 'tracking_journalobservation', 'tracking_journalcorrection',
+          'tracking_journalmemory', 'tracking_journalquestion', 'tracking_journalscore',
           'tracking_ouraauthorization', 'tracking_ouraconnection', 'tracking_ourasync',
           'tracking_ourapage', 'tracking_ourarecord', 'tracking_ourarevision')
 # Older snapshots omit later groups. A group is counted only when every table in it exists.
@@ -32,6 +33,7 @@ OPTIONAL_GROUPS = (
               'tracking_ourapage', 'tracking_ourarecord', 'tracking_ourarevision')),
     ('Plan', ('tracking_dietentry', 'tracking_clinicalitem')),
     ('Journal', ('tracking_journalentry', 'tracking_journalobservation', 'tracking_journalcorrection')),
+    ('JournalContinuity', ('tracking_journalmemory', 'tracking_journalquestion', 'tracking_journalscore')),
 )
 
 

@@ -1,10 +1,10 @@
-"""Availability of the owner's private governing document.
+"""Private governing document for the authorized owner and connected clients.
 
-The document body is not in Git and is not read here. A later deployment may
-mount a pointer at private storage `governing/current.json` with an id, a
-version, and a sha256. Until that pointer exists, the document is unavailable.
-Unavailable is not a substitute rule set and not permission to invent one.
+The body is not in Git. Private storage holds `governing/current.json` and
+`governing/body.txt`. Status never returns the text. The document call returns
+the text only after the checksum matches. Unavailable is not a substitute rule set.
 """
+import hashlib
 import json
 from pathlib import Path
 
@@ -38,3 +38,24 @@ def governing_status():
             and all(character in '0123456789abcdef' for character in digest))):
         return dict(UNAVAILABLE)
     return {'available': True, 'document_id': data['document_id'], 'version': data['version'], 'sha256': digest}
+
+
+def governing_document():
+    """Return the private text for an already authorized caller, or unavailable."""
+    status = governing_status()
+    if not status['available']:
+        return {**status, 'text': None}
+    root = Path(settings.PRIVATE_ROOT).resolve()
+    body = root / 'governing' / 'body.txt'
+    if body.is_symlink() or not body.is_file():
+        return {**dict(UNAVAILABLE), 'text': None}
+    resolved = body.resolve()
+    if not resolved.is_relative_to(root) or body.stat().st_size > 200_000:
+        return {**dict(UNAVAILABLE), 'text': None}
+    try:
+        text = body.read_text(encoding='utf-8')
+    except (OSError, UnicodeError):
+        return {**dict(UNAVAILABLE), 'text': None}
+    if hashlib.sha256(text.encode()).hexdigest() != status['sha256']:
+        return {**dict(UNAVAILABLE), 'text': None}
+    return {**status, 'text': text}

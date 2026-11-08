@@ -258,7 +258,7 @@ def delete_journal(owner, record_id, expected_version, request_id, expected_obse
         raise Conflict('Storage is busy. Retry the same deletion request.') from None
 
 
-_PROPOSAL_FIELDS = {'domain_id', 'metric_key', 'value_state', 'narrative', 'boolean', 'subject', 'support_span', 'temporal_scope'}
+_PROPOSAL_FIELDS = {'domain_id', 'metric_key', 'value_state', 'narrative', 'boolean', 'subject', 'support_span', 'temporal_scope', 'rating', 'practice_key'}
 _TEMPORAL = {'completed', 'intention', 'unspecified'}
 
 
