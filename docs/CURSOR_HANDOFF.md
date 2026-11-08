@@ -1,5 +1,9 @@
 # Cursor continuation handoff
 
+## Oura server setup ready, November 8, 2026, 3:47 AM CST
+
+Credentials for the dashboard registration are installed only on `live.cx83labs.com`. `OURA_CLIENT_ID` is in the server environment. The client secret and a new Fernet token key are mode 400, owned by UID 10001, outside the data volume. An existing key was not overwritten. `OURA_ENABLED` is 1. The redirect is `https://live.cx83labs.com/integrations/oura/callback/`. Requested scopes are `email personal daily heartrate workout tag session spo2 heart_health`. The `stress` scope is not requested. The app container was recreated (`a10f91a0cf70`, start `2026-11-08T09:47:13Z`). Shared proxy start remains `2026-10-10T17:40:21Z`. Twenty containers stayed up. The app can read both secret files. Owner `/integrations/oura/` returned 200, says setup is enabled, and shows Connect Oura. No Oura account is authorized yet. Ingestion has not been run. Do not call it connected.
+
 ## Your Headroom live, November 8, 2026, 3:40 AM CST
 
 Published to `live.cx83labs.com`. Server commit `0808ae8`. App container restarted in place (`ad48d4a2e237`, start `2026-11-08T09:39:59Z`). Shared proxy start remains `2026-10-10T17:40:21Z`. No migration. `OURA_ENABLED` stays 0. The product name stays CX83 Fit. Steady is only the working name direction.

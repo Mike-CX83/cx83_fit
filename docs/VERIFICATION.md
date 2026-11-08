@@ -1,5 +1,9 @@
 # Verification checkpoint
 
+## Oura server setup ready, November 8, 3:47 AM CST
+
+App container `a10f91a0cf70` started `2026-11-08T09:47:13Z`. Shared proxy start remains `2026-10-10T17:40:21Z`. `OURA_ENABLED` is 1 and the redirect matches `https://live.cx83labs.com/integrations/oura/callback/`. Inside the app, both secret files are mode 400, UID 10001, and readable. The requested scope list is the nine official scopes and does not include `stress`. Anonymous `/integrations/oura/` redirects to login. After owner sign-in the page contains "Oura setup is enabled.", "Connect Oura", and "No Oura account has been authorized." No authorization was completed in this step and no ingestion was run. This is not a connected Oura account.
+
 ## Your Headroom live, November 8, 3:40 AM CST
 
 Server commit `0808ae8`. App container `ad48d4a2e237` restarted at `2026-11-08T09:39:59Z`. Shared proxy start remains `2026-10-10T17:40:21Z`. No migration and no Oura change.
