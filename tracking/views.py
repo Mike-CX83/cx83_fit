@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from .forms import MeasurementForm, MeasurementImportForm
-from .models import Measurement, ProgressPhoto, SummaryRecord
+from .models import Measurement, ProgressPhoto
 from . import services, imports
 from .csv_measurements import HEADER
 from .uploads import MeasurementCSVUploadLimit
@@ -44,36 +44,59 @@ def owner_only(view):
 @owner_only
 @require_http_methods(['GET'])
 def overview(request):
+    from datetime import date
+    from tracking.today import day_metrics
+    today = timezone.localdate()
+    is_test = request.GET.get('synthetic') == '1'
+    raw = request.GET.get('day')
+    if raw:
+        try:
+            day = date.fromisoformat(raw)
+        except ValueError:
+            raise Http404
+        if day > today or day < today - timedelta(days=365):
+            raise Http404
+    else:
+        day = today
+    return render(request, 'tracking/overview.html', {
+        'today': today,
+        'day': day,
+        'prev_day': day - timedelta(days=1),
+        'next_day': day + timedelta(days=1) if day < today else None,
+        'metrics': day_metrics(request.user, day, include_synthetic=is_test),
+        'synthetic': is_test,
+    })
+
+
+@owner_only
+@require_http_methods(['GET'])
+def progress(request):
     today = timezone.localdate()
     is_test = request.GET.get('synthetic') == '1'
     try:
         offset = int(request.GET.get('offset', '0'))
-        result = services.list_measurements(request.user, str(today-timedelta(days=365)), str(today), include_synthetic=is_test, limit=50, offset=offset)
+        result = services.list_measurements(
+            request.user, str(today - timedelta(days=365)), str(today),
+            include_synthetic=is_test, limit=50, offset=offset)
     except (ValueError, TypeError):
         raise Http404
     photos = ProgressPhoto.objects.filter(owner=request.user, deleted_at__isnull=True)
     if not is_test:
         photos = photos.filter(synthetic=False)
-    measurements = Measurement.objects.filter(owner=request.user, deleted_at__isnull=True,
-                                              local_date__lte=today)
+    measurements = Measurement.objects.filter(owner=request.user, deleted_at__isnull=True, local_date__lte=today)
     if not is_test:
         measurements = measurements.filter(synthetic=False)
     latest_weight = measurements.filter(metric='weight').order_by('-local_date', '-created_at').first()
-    summary_records = SummaryRecord.objects.filter(owner=request.user, deleted_at__isnull=True, local_date__lte=today)
-    if not is_test:
-        summary_records = summary_records.filter(synthetic=False)
-    modules = [{'kind': kind, 'title': title, 'latest': summary_records.filter(kind=kind).first()}
-               for kind, title in SummaryRecord.KINDS]
-    for module in modules:
-        latest = module['latest']
-        module['entry_label'] = 'Reviewed CSV import' if latest and latest.entry_method == 'imported' else 'Manually entered'
-        module['age_days'] = (today-latest.local_date).days if latest else None
-    return render(request, 'tracking/overview.html', {
+    return render(request, 'tracking/progress.html', {
         'result': result, 'synthetic': is_test, 'next_offset': result['next_offset'],
-        'latest_weight': latest_weight, 'recent_photos': photos[:3], 'photo_count': photos.count(),
-        'weight_age_days': (today-latest_weight.local_date).days if latest_weight else None,
-        'modules': modules,
+        'latest_weight': latest_weight, 'recent_photos': photos[:6],
     })
+
+
+@owner_only
+@require_http_methods(['GET'])
+def more(request):
+    return render(request, 'tracking/more.html')
 
 
 @owner_only
@@ -124,7 +147,7 @@ def measurement_history(request, record_id):
     fields = [('metric', 'Measurement'), ('value', 'Value'), ('unit', 'Unit'),
               ('local_date', 'Measurement date'), ('observed_at', 'Time observed'),
               ('source_timezone', 'Source timezone'), ('side', 'Side'),
-              ('location', 'Location'), ('notes', 'Notes'), ('synthetic', 'Synthetic')]
+              ('location', 'Location'), ('notes', 'Notes')]
     entries = []
     for change in page:
         before = change.before or {}

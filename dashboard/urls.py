@@ -10,6 +10,7 @@ from dashboard import oauth
 from tracking.oura import views as oura_views
 from tracking import public_views
 from tracking import plan_views
+from tracking import diary_views
 from tracking import journal_views
 
 urlpatterns = [
@@ -30,7 +31,10 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('manifest.webmanifest', views.manifest, name='manifest'),
     path('', views.overview, name='overview'),
+    path('diary/', diary_views.page, name='diary'),
     path('plan/', plan_views.page, name='plan'),
+    path('progress/', views.progress, name='progress'),
+    path('more/', views.more, name='more'),
     path('export/', exports.download, name='export'),
     path('trends/', trends.page, name='trends'),
     path('journal/', journal_views.page, name='journal'),

@@ -1,0 +1,30 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<h1 class="page-title">Diary</h1>
+{% if error %}<p class="notice">{{ error }}</p>{% endif %}
+<section class="panel">
+<form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="diary">
+<label>Date <input name="local_date" type="date" value="{{ form_date }}" required></label>
+<label>Meal <select name="meal">
+  <option value="breakfast"{% if form_meal == 'breakfast' %} selected{% endif %}>Breakfast</option>
+  <option value="lunch"{% if form_meal == 'lunch' %} selected{% endif %}>Lunch</option>
+  <option value="dinner"{% if form_meal == 'dinner' %} selected{% endif %}>Dinner</option>
+  <option value="snack"{% if form_meal == 'snack' %} selected{% endif %}>Snack</option>
+</select></label>
+<label>What you ate <input name="description" maxlength="500" required autofocus></label>
+<label>Calories <input name="calories" inputmode="decimal"></label>
+<label>Protein g <input name="protein_g" inputmode="decimal"></label>
+<label>Fiber g <input name="fiber_g" inputmode="decimal"></label>
+<button>Add meal</button>
+</form>
+</section>
+<section class="panel"><h2>Recent</h2>
+{% for meal in meals %}<article><div><strong>{{ meal.local_date }} · {{ meal.meal }}</strong><p>{{ meal.description }}{% if meal.source_system != 'manual' %} · {{ meal.source_system }}{% endif %}</p></div><div>{% if meal.calories %}<strong>{{ meal.calories }} kcal</strong>{% endif %}{% if meal.protein_g %}<p>{{ meal.protein_g }} g protein</p>{% endif %}{% if meal.fiber_g %}<p>{{ meal.fiber_g }} g fiber</p>{% endif %}</div></article>{% empty %}<p>No meals in this window yet.</p>{% endfor %}
+</section>
+<section class="panel"><h2>Paste from MyFitnessPal</h2>
+<p class="quiet">One line: date, meal, food, then optional calories, protein, fiber.</p>
+<form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="myfitnesspal">
+<label>Meals <textarea name="diary_text" rows="5" maxlength="20000" placeholder="2026-11-07 breakfast eggs and toast | 420 | 32 | 4"></textarea></label>
+<button>Save pasted meals</button>
+</form>
+</section>
+{% endblock %}

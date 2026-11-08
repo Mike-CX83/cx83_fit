@@ -1,0 +1,18 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<h1 class="page-title">More</h1>
+<nav class="more-list" aria-label="More">
+  <a href="{% url 'plan' %}">Plan</a>
+  <a href="{% url 'journal' %}">Journal</a>
+  <a href="{% url 'summary_list' 'nutrition' %}">Nutrition</a>
+  <a href="{% url 'summary_list' 'recovery' %}">Recovery</a>
+  <a href="{% url 'summary_list' 'activity' %}">Activity</a>
+  <a href="{% url 'summary_list' 'health' %}">Health</a>
+  <a href="{% url 'nutrition_targets' %}">Goals</a>
+  <a href="{% url 'reviews' %}">Reviews</a>
+  <a href="{% url 'measurement_import' %}">Import measurements</a>
+  <a href="{% url 'summary_import' %}">Import summaries</a>
+  <a href="{% url 'export' %}">Export</a>
+  <a href="{% url 'connections' %}">Access</a>
+  <a href="{% url 'oura' %}">Oura</a>
+</nav>
+{% endblock %}

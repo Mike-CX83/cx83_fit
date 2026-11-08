@@ -1,0 +1,50 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<h1 class="page-title">Plan</h1>
+<p class="quiet">{{ plan.start }} through {{ plan.end }}. <a href="{% url 'diary' %}">Diary</a></p>
+{% if error %}<p class="notice">{{ error }}</p>{% endif %}
+<div class="summary-grid">
+  <section class="panel"><h2>Steps</h2>{% for row in plan.analysis.steps %}<p>{{ row.average }} steps a day from {{ row.source }}{% if row.device %} · {{ row.device }}{% endif %}. Observed {{ row.observed_days }} of {{ plan.window_days }} days. Latest {{ row.latest_date }}.</p>{% empty %}<p>No step days in this window.</p>{% endfor %}</section>
+  <section class="panel"><h2>Sleep</h2>{% for row in plan.analysis.sleep_minutes %}<p>{{ row.average }} minutes a night from {{ row.source }}{% if row.device %} · {{ row.device }}{% endif %}. Observed {{ row.observed_days }} of {{ plan.window_days }} days.</p>{% empty %}<p>No sleep days in this window.</p>{% endfor %}</section>
+  <section class="panel"><h2>Workouts</h2>{% for row in plan.analysis.workout_minutes %}<p>{{ row.average }} minutes a day from {{ row.source }}. Observed {{ row.observed_days }} days.</p>{% empty %}<p>No workout days in this window.</p>{% endfor %}</section>
+  <section class="panel"><h2>Calories burned</h2>
+    {% for row in plan.analysis.active_calories %}<p>{{ row.average }} active kcal a day from {{ row.source }}{% if row.device %} · {{ row.device }}{% endif %}. Observed {{ row.observed_days }} days. This is burn, not food.</p>{% endfor %}
+    {% for row in plan.analysis.total_calories %}<p>{{ row.average }} total kcal a day from {{ row.source }}{% if row.device %} · {{ row.device }}{% endif %}. Observed {{ row.observed_days }} days.</p>{% endfor %}
+    {% if not plan.analysis.active_calories and not plan.analysis.total_calories %}<p>No device burn in this window.</p>{% endif %}
+  </section>
+  <section class="panel"><h2>Diet numbers</h2>
+    {% for row in plan.analysis.calories %}<p>{{ row.average }} kcal from {{ row.source }}. Observed {{ row.observed_days }} days.</p>{% endfor %}
+    {% for row in plan.analysis.protein %}<p>{{ row.average }} g protein from {{ row.source }}.{% if plan.protein_target_g %} Target on file: {{ plan.protein_target_g }} g.{% endif %} Observed {{ row.observed_days }} days.</p>{% endfor %}
+    {% for row in plan.analysis.fiber %}<p>{{ row.average }} g fiber from {{ row.source }}. Observed {{ row.observed_days }} days.</p>{% endfor %}
+    {% for row in plan.analysis.net_carbohydrates %}<p>{{ row.average }} g net carbs from {{ row.source }}, calculated where total carbs and fiber were both recorded. Observed {{ row.observed_days }} days.</p>{% endfor %}
+    {% if not plan.analysis.calories and not plan.analysis.protein %}<p>No daily diet totals in this window.</p>{% endif %}
+  </section>
+</div>
+<section class="panel"><h2>Goals</h2>
+  {% for goal in plan.goals %}<p>{{ goal.label }}: {{ goal.value }} {{ goal.unit }}</p>{% empty %}<p>No goals saved yet.</p>{% endfor %}
+  <p><a href="{% url 'nutrition_targets' %}">Edit goals</a></p>
+</section>
+<section class="panel"><h2>Most common meals</h2>
+  {% for meal in plan.common_meals %}<p>{{ meal.description }} · {{ meal.times }} times · last {{ meal.last_date }}</p>{% empty %}<p>A meal shows here after it appears at least twice in this window.</p>{% endfor %}
+</section>
+<section class="panel"><h2>Trends</h2>
+  {% for line in plan.trends %}
+    <h3>{{ line.title }}</h3>
+    {% for series in line.series %}
+      <p>{{ series.source }}: {{ series.first }} on {{ series.first_date }}{% if series.change != None %}, {{ series.last }} on {{ series.last_date }}, change {{ series.change }} {{ series.unit }}{% endif %}. {{ series.observed }} observations.</p>
+    {% empty %}<p>Nothing recorded.</p>{% endfor %}
+    <p><a href="{{ line.href }}">Open the {{ line.title|lower }} chart</a></p>
+  {% endfor %}
+</section>
+<section class="panel"><h2>Current labs, medications, and diagnoses</h2>
+  <h3>Labs</h3>{% for item in plan.clinical.labs %}<p>{{ item.name }}: {{ item.detail }} · {{ item.recorded_on }} <button form="stop-{{ item.id }}">Replace by stopping this result</button></p><form id="stop-{{ item.id }}" method="post">{% csrf_token %}<input type="hidden" name="action" value="stop"><input type="hidden" name="item_id" value="{{ item.id }}"></form>{% empty %}<p>No current lab on file.</p>{% endfor %}
+  <h3>Medications</h3>{% for item in plan.clinical.medications %}<p>{{ item.name }}{% if item.detail %} · {{ item.detail }}{% endif %} · {{ item.recorded_on }} <button form="stop-{{ item.id }}">Mark stopped</button></p><form id="stop-{{ item.id }}" method="post">{% csrf_token %}<input type="hidden" name="action" value="stop"><input type="hidden" name="item_id" value="{{ item.id }}"></form>{% empty %}<p>No current medication on file.</p>{% endfor %}
+  <h3>Diagnoses</h3>{% for item in plan.clinical.diagnoses %}<p>{{ item.name }}{% if item.detail %} · {{ item.detail }}{% endif %} · {{ item.recorded_on }} <button form="stop-{{ item.id }}">Mark no longer current</button></p><form id="stop-{{ item.id }}" method="post">{% csrf_token %}<input type="hidden" name="action" value="stop"><input type="hidden" name="item_id" value="{{ item.id }}"></form>{% empty %}<p>No current diagnosis on file.</p>{% endfor %}
+  <form method="post" class="stack-form">{% csrf_token %}<input type="hidden" name="action" value="clinical">
+    <label>Type <select name="kind"><option value="lab">Lab</option><option value="medication">Medication</option><option value="diagnosis">Diagnosis</option></select></label>
+    <label>Name <input name="name" maxlength="120" required></label>
+    <label>Result, dose, or note <input name="detail" maxlength="500"></label>
+    <label>Recorded on <input name="recorded_on" type="date" value="{{ plan.end }}" required></label>
+    <button>Save current item</button>
+  </form>
+</section>
+{% endblock %}

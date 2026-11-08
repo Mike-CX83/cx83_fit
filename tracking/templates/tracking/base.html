@@ -1,3 +1,32 @@
 {% load static %}<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>CX83 Fit</title><meta name="theme-color" content="#080E22"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="CX83 Fit"><link rel="icon" type="image/svg+xml" href="{% static 'tracking/favicon.svg' %}"><link rel="manifest" href="{% url 'manifest' %}"><link rel="stylesheet" href="{% static 'tracking/app.css' %}"></head>
-<body><header><a class="brand" href="/"><img class="brand-mark" src="{% static 'tracking/brand/symbol-showcase.svg' %}" width="36" height="36" alt=""><span class="brand-copy"><span class="brand-name">CX83 Fit</span><span class="brand-builder">CX83 Labs</span></span></a>{% if user.is_authenticated %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Sign out</button></form>{% endif %}</header><main>{% if user.is_authenticated %}<nav aria-label="Sections"><a href="/">Overview</a><a href="{% url 'plan' %}">Plan</a><a href="{% url 'trends' %}">Trends</a><a href="{% url 'photo_gallery' %}">Photos</a><a href="{% url 'summary_list' 'nutrition' %}">Nutrition</a><a href="{% url 'summary_list' 'recovery' %}">Recovery</a><a href="{% url 'summary_list' 'activity' %}">Activity</a><a href="{% url 'summary_list' 'health' %}">Health</a><a href="{% url 'reviews' %}">Reviews</a><a href="{% url 'journal' %}">Journal</a></nav>{% endif %}{% block content %}{% endblock %}</main><footer><div class="footer-brand"><img class="footer-logo" src="{% static 'tracking/brand/logo-dark.svg' %}" width="160" height="45" alt="CX83 Labs"><span>Builds CX83 Fit</span></div><p>America/Chicago · Your history stays in your own database.{% if user.is_authenticated %} <a href="{% url 'export' %}">Export history</a> · <a href="{% url 'connections' %}">Dashboard access</a> · <a href="{% url 'oura' %}">Oura</a>{% endif %} <a href="{% url 'privacy' %}">Privacy</a> · <a href="{% url 'terms' %}">Terms</a></p></footer></body></html>
+<body class="{% if user.is_authenticated %}has-tabs{% endif %}">
+<header class="app-header">
+  <a class="brand" href="/"><img class="brand-mark" src="{% static 'tracking/brand/symbol-showcase.svg' %}" width="32" height="32" alt=""><span class="brand-name">CX83 Fit</span></a>
+  {% if user.is_authenticated %}<form method="post" action="{% url 'logout' %}" class="sign-out">{% csrf_token %}<button type="submit" class="text-button">Sign out</button></form>{% endif %}
+</header>
+<main>
+{% if user.is_authenticated %}
+<nav class="desktop-nav" aria-label="Primary">
+  <a href="/" {% if request.resolver_match.url_name == 'overview' %}class="is-active"{% endif %}>Today</a>
+  <a href="{% url 'diary' %}" {% if request.resolver_match.url_name == 'diary' %}class="is-active"{% endif %}>Diary</a>
+  <a href="{% url 'plan' %}" {% if request.resolver_match.url_name == 'plan' %}class="is-active"{% endif %}>Plan</a>
+  <a href="{% url 'progress' %}" {% if request.resolver_match.url_name == 'progress' or request.resolver_match.url_name == 'trends' or request.resolver_match.url_name == 'photo_gallery' or request.resolver_match.url_name == 'photo_upload' or request.resolver_match.url_name == 'photo_compare' or request.resolver_match.url_name == 'photo_detail' or request.resolver_match.url_name == 'measurement_new' or request.resolver_match.url_name == 'measurement_import' or request.resolver_match.url_name == 'measurement_history' or request.resolver_match.url_name == 'measurement_edit' %}class="is-active"{% endif %}>Progress</a>
+  <a href="{% url 'more' %}" {% if request.resolver_match.url_name == 'more' or request.resolver_match.url_name == 'journal' or request.resolver_match.url_name == 'journal_detail' or request.resolver_match.url_name == 'reviews' or request.resolver_match.url_name == 'summary_list' or request.resolver_match.url_name == 'export' or request.resolver_match.url_name == 'connections' or request.resolver_match.url_name == 'oura' or request.resolver_match.url_name == 'nutrition_targets' or request.resolver_match.url_name == 'summary_import' %}class="is-active"{% endif %}>More</a>
+</nav>
+{% endif %}
+{% block content %}{% endblock %}
+</main>
+{% if user.is_authenticated %}
+<nav class="bottom-nav" aria-label="Primary">
+  <a href="/" {% if request.resolver_match.url_name == 'overview' %}class="is-active"{% endif %}>Today</a>
+  <a href="{% url 'diary' %}" {% if request.resolver_match.url_name == 'diary' %}class="is-active"{% endif %}>Diary</a>
+  <a href="{% url 'progress' %}" {% if request.resolver_match.url_name == 'progress' or request.resolver_match.url_name == 'trends' or request.resolver_match.url_name == 'photo_gallery' or request.resolver_match.url_name == 'measurement_new' %}class="is-active"{% endif %}>Progress</a>
+  <a href="{% url 'more' %}" {% if request.resolver_match.url_name == 'more' or request.resolver_match.url_name == 'journal' or request.resolver_match.url_name == 'plan' or request.resolver_match.url_name == 'export' or request.resolver_match.url_name == 'connections' or request.resolver_match.url_name == 'oura' %}class="is-active"{% endif %}>More</a>
+</nav>
+{% endif %}
+<footer>
+  <div class="footer-brand"><img class="footer-logo" src="{% static 'tracking/brand/logo-dark.svg' %}" width="140" height="40" alt="CX83 Labs"><span>Builds CX83 Fit</span></div>
+  <p><a href="{% url 'privacy' %}">Privacy</a> · <a href="{% url 'terms' %}">Terms</a></p>
+</footer>
+</body></html>

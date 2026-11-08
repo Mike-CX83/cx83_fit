@@ -1,17 +1,65 @@
 {% extends 'tracking/base.html' %}{% block content %}
-<p class="eyebrow">Personal health</p><h1>Your health overview</h1>
-<p>Your measurements, progress photos and source status in one place. Missing information stays unknown.</p>
-<nav><a class="button" href="{% url 'measurement_new' %}">Add measurement</a><a href="{% url 'measurement_import' %}">Import CSV</a><a href="{% url 'photo_gallery' %}">Progress photos</a><a href="/">Personal history</a><a href="/?synthetic=1">Include synthetic tests</a></nav>
-{% if synthetic %}<p class="notice">Synthetic test records are included here. They are excluded from personal history by default.</p>{% endif %}
-<div class="summary-grid">
-  <section class="panel"><p class="eyebrow">Latest weight</p>{% if latest_weight %}<h2 class="metric-value">{{ latest_weight.value }} {{ latest_weight.unit }}</h2><p>{{ latest_weight.local_date|date:'M j, Y' }} · {{ latest_weight.source_system }}</p><p>{{ weight_age_days }} days since latest observation.</p>{% if latest_weight.synthetic %}<span class="badge">Synthetic</span>{% endif %}<a href="{% url 'measurement_history' latest_weight.id %}">View source and history</a>{% else %}<h2>Not recorded</h2><p>Add a weight measurement when it fits your routine.</p>{% endif %}</section>
-  <section class="panel"><p class="eyebrow">Body tracking</p><h2>{{ result.count }} measurements</h2><p>Recorded in the past year. Missing dates are not zero.</p><a href="#measurement-history">View measurements</a></section>
-  <section class="panel"><p class="eyebrow">Progress photos</p><h2>{{ photo_count }} photos</h2><p>Private photos organized by capture date and view.</p><a href="{% url 'photo_gallery' %}{% if synthetic %}?synthetic=1{% endif %}">Open gallery</a> · <a href="{% url 'photo_compare' %}">Compare dates</a></section>
+<nav class="date-strip" aria-label="Day">
+  <a class="date-nav" href="?day={{ prev_day|date:'Y-m-d' }}{% if synthetic %}&amp;synthetic=1{% endif %}" aria-label="Previous day">‹</a>
+  <h1 class="page-title date-title">{{ day|date:'D, M j' }}</h1>
+  {% if next_day %}<a class="date-nav" href="?day={{ next_day|date:'Y-m-d' }}{% if synthetic %}&amp;synthetic=1{% endif %}" aria-label="Next day">›</a>{% else %}<span class="date-nav is-disabled" aria-hidden="true">›</span>{% endif %}
+</nav>
+
+<section class="calorie-hero{% if metrics.calories.near_goal %} is-flare{% endif %}">
+  {% if metrics.calories.logged %}
+    <p class="hero-label">Calories</p>
+    <p class="hero-value">{{ metrics.calories.value }} <span class="hero-unit">kcal</span></p>
+    {% if metrics.calories.goal %}
+      <p class="hero-sub{% if metrics.calories.remaining_positive %} has-flare{% endif %}">
+        {% if metrics.calories.remaining_positive %}{{ metrics.calories.remaining }} left{% else %}{{ metrics.calories.remaining|cut:'-' }} over{% endif %}
+        · goal {{ metrics.calories.goal }}
+      </p>
+      {% if metrics.calories.bar != None %}
+        <div class="goal-bar{% if metrics.calories.near_goal %} flare{% endif %}"><span style="width:{{ metrics.calories.bar|floatformat:0 }}%"></span></div>
+      {% endif %}
+    {% endif %}
+  {% else %}
+    <p class="hero-label">Calories</p>
+    <p class="hero-value">Not logged</p>
+    {% if metrics.calories.goal %}<p class="hero-sub">Goal {{ metrics.calories.goal }} kcal</p>{% endif %}
+  {% endif %}
+</section>
+
+<div class="chip-row">
+{% for chip in metrics.chips %}
+  <section class="metric-chip{% if chip.attention %} is-attention{% endif %}">
+    <p class="chip-label">{{ chip.label }}</p>
+    {% if chip.logged %}
+      <p class="chip-value">{{ chip.value }}{% if chip.unit %} <span>{{ chip.unit }}</span>{% endif %}</p>
+      {% if chip.goal %}<p class="chip-sub">/ {{ chip.goal }}</p>{% elif chip.sub %}<p class="chip-sub">{{ chip.sub }}</p>{% endif %}
+      {% if chip.bar != None %}
+        <div class="goal-bar thin{% if chip.protein %} protein{% endif %}{% if chip.attention %} attention{% endif %}"><span style="width:{{ chip.bar|floatformat:0 }}%"></span></div>
+      {% endif %}
+    {% else %}
+      <p class="chip-value muted">—</p>
+      {% if chip.goal %}<p class="chip-sub">goal {{ chip.goal }}</p>{% endif %}
+    {% endif %}
+  </section>
+{% endfor %}
 </div>
-<div class="summary-grid module-grid">{% for module in modules %}<section class="panel"><p class="eyebrow">{{ module.title }}</p>{% if module.latest %}<h2>{{ module.latest.local_date|date:'M j, Y' }}</h2><p>{{ module.latest.source_system }} · {{ module.latest.get_completeness_display }} · {{ module.entry_label }}</p><p>{{ module.age_days }} days since latest observation. Recorded {{ module.latest.created_at|date:'M j, Y' }}.</p>{% if module.latest.synthetic %}<span class="badge">Synthetic</span>{% endif %}{% else %}<h2>No records yet</h2><p>Add a reviewed source summary. Live sync is not connected.</p>{% endif %}<a href="{% url 'summary_list' module.kind %}{% if synthetic %}?synthetic=1{% endif %}">Open {{ module.title|lower }}</a></section>{% endfor %}</div>
-<section class="panel" id="measurement-history"><h2>Your measurements</h2><p>{{ result.count }} observations in the past year. Dates without measurements are unknown, never zero.</p>
-{% for item in result.items %}<article><div><strong>{{ item.metric|title }}</strong>{% if item.synthetic %}<span class="badge">Synthetic</span>{% endif %}<p>{{ item.local_date }} · {{ item.side }} {{ item.location }}</p></div><div><strong>{{ item.value }} {{ item.unit }}</strong><p>{{ item.source_system }} · revision {{ item.version }}</p><a href="{% url 'measurement_history' item.id %}">History</a>{% if item.source_system == 'manual' or item.source_system == 'mcp' %} · <a href="{% url 'measurement_edit' item.id %}">Correct</a>{% endif %}</div></article>{% empty %}<p>No measurements yet. Add a measurement to start your history.</p>{% endfor %}
-{% if next_offset %}<a href="?offset={{ next_offset }}{% if synthetic %}&amp;synthetic=1{% endif %}#measurement-history">Next page</a>{% endif %}</section>
-<section class="panel"><h2>Recent progress photos</h2><div class="photo-grid">{% for photo in recent_photos %}<div class="photo-card"><a href="{% url 'photo_detail' photo.id %}"><img src="{% url 'photo_image' photo.id %}" alt="{{ photo.get_view_display }} view from {{ photo.capture_date|date:'Y-m-d' }}" loading="lazy" width="{{ photo.width }}" height="{{ photo.height }}">{{ photo.capture_date|date:'M j, Y' }} · {{ photo.get_view_display }}</a>{% if photo.synthetic %}<span class="badge">Synthetic</span>{% endif %}</div>{% empty %}<p>No photos in this history. <a href="{% url 'photo_upload' %}">Add your first photo</a>.</p>{% endfor %}</div></section>
-<section class="panel"><h2>Source status</h2><p>MyFitnessPal: dashboard sync not connected. The existing chat connection is separate.</p><p><a href="{% url 'oura' %}">Oura authorization and ingestion status</a>. Apple Health and clinical imports are not connected.</p><p>Nutrition, recovery, activity and clinical tracking support reviewed manual records. Oura source records remain separate from reviewed summaries.</p><p>ChatGPT dashboard access: setup and verification pending.</p></section>
+
+<p class="checkin-line">{% if metrics.checkin %}Check-in saved{% else %}No check-in yet{% endif %}</p>
+<div class="meal-board">
+{% for section in metrics.meal_sections %}
+<section class="meal-block">
+  <div class="meal-head">
+    <h2>{{ section.label }}</h2>
+    <a class="add-link" href="{% url 'diary' %}?local_date={{ day|date:'Y-m-d' }}&amp;meal={{ section.key }}">Add</a>
+  </div>
+  {% for meal in section.items %}
+    <article class="meal-row">
+      <div><strong>{{ meal.description }}</strong>{% if meal.source_system != 'manual' %}<p>{{ meal.source_system }}</p>{% endif %}</div>
+      <div class="meal-nums">{% if meal.calories %}<strong>{{ meal.calories }}</strong>{% endif %}{% if meal.protein_g %}<p>{{ meal.protein_g }}g P</p>{% endif %}</div>
+    </article>
+  {% empty %}
+    <p class="empty-meal">Nothing logged. <a class="add-link" href="{% url 'diary' %}?local_date={{ day|date:'Y-m-d' }}&amp;meal={{ section.key }}">Add food</a></p>
+  {% endfor %}
+</section>
+{% endfor %}
+</div>
 {% endblock %}

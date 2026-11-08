@@ -1,0 +1,22 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<h1 class="page-title">Progress</h1>
+{% if latest_weight %}
+<section class="calorie-hero">
+  <p class="hero-label">Latest weight</p>
+  <p class="hero-value">{{ latest_weight.value }} <span class="hero-unit">{{ latest_weight.unit }}</span></p>
+  <p class="hero-sub">{{ latest_weight.local_date|date:'M j, Y' }} · {{ latest_weight.source_system }} · <a href="{% url 'measurement_history' latest_weight.id %}">History</a></p>
+</section>
+{% endif %}
+<nav class="page-actions">
+  <a class="button" href="{% url 'measurement_new' %}">Add measurement</a>
+  <a href="{% url 'trends' %}">Charts</a>
+  <a href="{% url 'photo_gallery' %}">Gallery</a>
+  <a href="{% url 'photo_compare' %}">Compare</a>
+  <a href="{% url 'photo_upload' %}">Add photo</a>
+</nav>
+<section class="panel" id="measurement-history"><h2>Measurements</h2>
+{% for item in result.items %}<article><div><strong>{{ item.metric|title }}</strong><p>{{ item.local_date }}{% if item.side or item.location %} · {{ item.side }} {{ item.location }}{% endif %}</p></div><div><strong>{{ item.value }} {{ item.unit }}</strong><p>{{ item.source_system }}</p><a href="{% url 'measurement_history' item.id %}">History</a>{% if item.source_system == 'manual' or item.source_system == 'mcp' %} · <a href="{% url 'measurement_edit' item.id %}">Correct</a>{% endif %}</div></article>{% empty %}<p>No measurements yet.</p>{% endfor %}
+{% if next_offset %}<a href="?offset={{ next_offset }}#measurement-history">Next page</a>{% endif %}
+</section>
+<section class="panel"><h2>Photos</h2><div class="photo-grid">{% for photo in recent_photos %}<div class="photo-card"><a href="{% url 'photo_detail' photo.id %}"><img src="{% url 'photo_image' photo.id %}" alt="{{ photo.get_view_display }} view from {{ photo.capture_date|date:'Y-m-d' }}" loading="lazy" width="{{ photo.width }}" height="{{ photo.height }}">{{ photo.capture_date|date:'M j, Y' }} · {{ photo.get_view_display }}</a></div>{% empty %}<p>No photos yet. <a href="{% url 'photo_upload' %}">Add one</a>.</p>{% endfor %}</div></section>
+{% endblock %}
