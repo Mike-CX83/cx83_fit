@@ -1,5 +1,69 @@
 # Verification checkpoint
 
+## Journal tools published, November 8, 2:14 AM CST
+
+Server commit `abeb443`. App container `51b14e3eef62` restarted at `2026-11-08T08:13:38Z`. Shared proxy `896e154e5916` still started `2026-10-10T17:40:21Z`. Twenty containers remained. `oura-personal.service`, `myfitnesspal-personal.service`, and `personal-health-backup.timer` stayed active. `MCP_WRITES_ENABLED` stayed 0. Live migrations are `0001` through `0007_journal`. No new migration ran. `tracking_journalentry` count stayed 0.
+
+Anonymous `/journal/` returned 302 to login. Anonymous `/mcp` returned 401. Owner sign-in loaded `/journal/` with Check proposal and Save journal entry. The synthetic check "I did not meditate" displayed "Nothing was saved" and "explicit_choice, observed, no". The page list stayed empty. The running container contains `save_journal_entry`. This was not a ChatGPT tool-refresh test and not a Dot voice test.
+
+## Journal tools for the ChatGPT connection, November 8, 2:09 AM CST
+
+`.venv/bin/python scripts/verify_local.py` passed: 261 tests, 17 opt-in socket tests skipped. A `health:read` token can list and call `read_journal`, `preview_journal`, `save_journal_entry`, and `delete_journal_entry`. Save without explicit authorization is rejected and does not call the service. Preview does not write. Measurement writes still require `health:write`. No production publish and no live ChatGPT or Dot voice session was tested.
+
+## Journal proposal check, November 8, 2:04 AM CST
+
+`.venv/bin/python scripts/verify_local.py` passed: 258 tests, 16 opt-in socket tests skipped. No production migration. The check writes nothing. Tests cover explicit false, intention, silence, a qualitative note with no invented severity, another person's symptom, disagreeing proposals, and a prompt-injection sentence stored only as proposal text. Anonymous `/journal/preview/` redirects to login. A disposable browser on `127.0.0.1:8768` showed "Nothing was saved" and "Ready to save: domain 18, explicit_choice, observed, no" while the saved list stayed empty. The temporary server was removed. ChatGPT and Dot were not given a journal tool.
+
+## Dark CX83 Fit chrome, November 8, 2:01 AM CST
+
+`https://live.cx83labs.com/login/` serves the dark CX83 palette: `color-scheme:dark`, Midnight page, `#101A33` panels, showcase mark, and dark Labs wordmark. Manifest background and theme are `#080E22`. Server commit `470f306`. App ID still starts `51b14e3eef62`. Shared proxy start remains `2026-10-10T17:40:21Z`. Oura, MyFitnessPal, and backup timer stayed active.
+
+## Journal published live, November 8, 1:56 AM CST
+
+Pre-migration encrypted backup snapshot `e2bbac4c50f38bb1e4c5aaf82b9491adb30a76c1aca47aa4fa46fe079d27eed1` completed. Server commit `ac2a940`. Migration `0007_journal` is applied. App restarted only; ID still starts `51b14e3eef62`. Shared proxy ID still starts `896e154e5916` with start `2026-10-10T17:40:21Z`. Twenty container IDs unchanged. Oura, MyFitnessPal, and backup timer stayed active. `MCP_WRITES_ENABLED` is 0.
+
+Anonymous `https://live.cx83labs.com/journal/` returns 302 to login. Owner browser login reached `/journal/` with Sign out, Journal nav, and CX83 Fit chrome. No personal journal text was entered in this check. ChatGPT journal tools were not added.
+
+## CX83 Fit branding live, November 8, 1:48 AM CST
+
+`https://live.cx83labs.com/login/` returns title and chrome **CX83 Fit**, theme `#080E22`, brand mark, and Labs footer line. Manifest name/short_name are `CX83 Fit`. Static mark and Geist font return HTTP 200. Server commit `dd7d951`. App container restarted only; ID still starts `51b14e3eef62`. Shared proxy ID still starts `896e154e5916` with start `2026-10-10T17:40:21Z`. Twenty container IDs unchanged. Oura, MyFitnessPal, and backup timer stayed active. No personal records were opened or changed.
+
+## Local journal loop, November 8, 1:51 AM CST
+
+`.venv/bin/python scripts/verify_local.py` passed after the final journal version fix. Django check, migration consistency, static collection, and 256 tests passed. Sixteen opt-in loopback socket tests were skipped. No production database was migrated. This journal code was not part of the branding publish above.
+
+The new tests cover explicit false versus unknown, a qualitative note with no invented number, replay, conflicting request ids, stale versions, a text correction that leaves the observation version unchanged, deletion that clears active text and receipt content, owner isolation, diet and clinical export rows, journal CSV formula protection, synthetic exclusion, the governing-document pointer refusing embedded text, process restart on a disposable database, and backup snapshots that omit later table groups. A partial journal or Oura schema is rejected. Every current tracking model is on the backup allowlist.
+
+A disposable local server at `127.0.0.1:8767` used a temporary database. Browser sign-in reached the overview. `/journal/` saved a synthetic entry, showed date only capture, domain 19, an observed note, and no score. A correction persisted. At 390 by 844 pixels the page had no horizontal overflow. Deletion removed the text from the list, left an empty body and empty observation value, and stored a receipt with only the id and deleted flag. `/plan/` still opened. The temporary server and database were removed. This is not physical iPhone, ChatGPT, or Dot verification. Live health writes stayed disabled.
+
+## CX83 Fit branding, November 8, 1:40 AM CST
+
+Local disposable instance on `127.0.0.1:8766` showed product name **CX83 Fit**, the Labs frame mark, Electric Blue actions on a light `#F5F7FF` ground, and the Labs wordmark in the footer. Browser checks covered sign in, overview, and plan at desktop width and a 390×844 phone viewport. Manifest returns name and short_name `CX83 Fit` with theme `#080E22`. Favicon and vendored Geist font served from `/static/`. Focused login and plan tests passed, 11 tests. No live deploy, no personal records, and the shared proxy were unchanged. Live `live.cx83labs.com` still serves the prior green chrome until this checkout is published there.
+
+## Plan page, November 8, 12:31 AM CST
+
+Signed-in browser load of `https://live.cx83labs.com/plan/` showed the 90 day window from 2026-08-11 through 2026-11-08, empty goals, common meals, device burn, and diary, plus chart links for weight, measurements, sleep, and recovery. The weight chart opened on that same window and reported 0 observations. `/nutrition/targets/` shows steps and sleep hours alongside the food goals. Anonymous `/plan/` returns 302. Focused plan tests passed, 4 tests, plus the existing nutrition target test. Migration `0006` applied. The shared proxy was not restarted. No personal diary, goal, or measurement was entered.
+
+## Commit and publish, November 8, 12:02 AM CST
+
+`commit_and_publish` is available to the existing `health:read site:write` token. A local publish-script check committed one synthetic file and refused `secrets/note.txt`. On the server, the same secret request returned "A requested path cannot be committed." and did not restart the app. The server source commit `c9e9bd4` tracks 0 secret, private, runtime, or `.env` paths. Anonymous `/` returns 302 and anonymous `/mcp` returns 401. The app container ID starts `51b14e3eef62`. The shared proxy was not restarted. No phone edit has been published yet.
+
+## ChatGPT site edits, November 7, 11:44 PM CST
+
+The health plugin permission is Allow all, matching CX83 Website. Reconnect consent listed read access and one exact repository replacement. A new access token has scope `health:read site:write`. Metadata at `https://live.cx83labs.com/.well-known/oauth-authorization-server` advertises those scopes and does not advertise `health:write`. Inside the app container, `/repo` contains only `dashboard`, `docs`, and `tracking`. `secrets` and `.env` are absent there, and resolving `secrets/note.txt` is refused. A source file under `/repo/dashboard` can be read. Anonymous `/` returns 302 and anonymous `/mcp` returns 401. The app container ID starts `469a6614e49c`. The shared proxy was not restarted. Focused repository tests passed, 2 tests, plus the metadata test. No ChatGPT chat has performed an edit yet. A source edit does not reload the running process.
+
+## Login names, November 7, 10:57 PM CST
+
+`kayla` and `mike` sign in to the existing single owner account on `https://live.cx83labs.com`. Browser sign-in for each name reached the overview. A wrong password did not. Anonymous `/` still redirects to login. The password is private in `secrets/deploy/dashboard-owner-password` and is not recorded here. The app container was recreated for the login-name mounts. Its ID starts `8b9209696c6e`. The other 19 containers, including the shared proxy, kept their IDs. No migration, backup, full suite or connector change ran. Focused login tests passed: 7 tests.
+
+Personal ChatGPT connected to `https://live.cx83labs.com/mcp` on November 7, 2026 after 11:06 PM CST. Consent granted `health:read` only. A valid access token was issued to the ChatGPT application. The connected chat reported 0 measurements for 2026-01-01 through 2026-11-07. No measurement values were recorded here. Focused OAuth tests passed, including a synthetic signed client assertion, rejection of a reused assertion, and rejection of the wrong key. The physical iPhone check remains unverified.
+
+## Native server deployment, November 7 evening
+
+The approved image/source/backup artifacts were hash verified on `vaultstorage-pilot` and installed in the new dedicated app directory/volume. Native server password/CSRF login, secure cookies, a synthetic browser measurement, synthetic exclusion, and session/data persistence after an app-only restart passed. Loopback binding, read only root, 384 MiB limit, public policy handlers and canonical OAuth issuer metadata matched the plan. The first server-to-Google-Drive encrypted backup passed, with actual expired-access-token refresh observed. Its daily timer is enabled/active. All 19 original containers retained their running IDs, and both standalone connector units retained their state/PIDs. Evidence: `docs/evidence/deployment-native-20261107.json`. No full suite, repeat build, shared proxy restart or real-health upload occurred.
+
+Public HTTPS for `live.cx83labs.com` passed on November 7, 2026 at 10:49 PM CST. The certificate is Let's Encrypt YR2 for that exact name, valid through February 6, 2027. HTTP redirects to HTTPS. Anonymous `/` redirects to login and anonymous `/mcp` returns 401. Browser owner login reached the overview. The shared proxy was not restarted. The same 20 container IDs remained running, and the standalone Oura and MyFitnessPal units stayed active. Physical iPhone and actual dashboard ChatGPT reads remain unverified. This hosted check is not those remaining gates.
+
 Updated November 6, 2026, America/Chicago. **237 application tests passed with no skips**, including actual loopback HTTP. The separate encrypted backup/restore proof passed. Rendered Chrome checks cover desktop and phone widths with disposable synthetic data. Actual ChatGPT authorization, real provider ingestion, physical iPhone/Safari and deployment remain unverified. No existing connection was changed.
 
 ## Current Oura continuation
@@ -10,7 +74,7 @@ The corrected Desktop OAuth flow saved an access token and offline refresh token
 
 `scripts/verify_backup.py` passed one real encrypted upload and one isolated restore from a new synthetic-only Google Drive repository. The three database/photo files matched their hashes; SQLite integrity/foreign keys and tracked table counts matched. Restored Django application reads verified synthetic source IDs, exact Oura original/revision values, restored token decryption with the separately held fixture key, photo bytes, correction/deletion history, partial/zero/null summaries, review and targets. Wrong-password rejection and intentional restored-file tampering checks passed. Live/local source storage stayed intact. The remote synthetic repository is retained. Evidence: `docs/evidence/drive-backup-verification.json`, `drive-backup-run.json` and `drive-backup-preparation.json`.
 
-Only the three credential-import regression tests and this backup proof ran for the latest correction; no full application suite, Linux rebuild, production migration, server service/timer, billing setting or existing connector was changed. The test ran from the Mac. A live access-token expiry/refresh cycle was not forced. Server recurring backups and hosted dashboard acceptance remain pending deployment approval; recovery-password manager custody still needs the owner. Earlier pending/blocked backup statements below describe historical preparation stages.
+Only the three credential-import regression tests and this backup proof ran for the latest correction; no full application suite, Linux rebuild, production migration, server service/timer, billing setting or existing connector was changed. The test ran from the Mac. A live access-token expiry/refresh cycle was not forced. Server recurring backups and hosted dashboard acceptance remain pending deployment approval. Mike subsequently confirmed saving the recovery password in his password manager on November 7; this is owner-reported and was not independently inspected. Earlier pending/blocked backup statements below describe historical preparation stages.
 
 ### Google Drive backup preparation
 
