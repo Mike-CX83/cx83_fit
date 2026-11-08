@@ -9,6 +9,8 @@ from tracking import reviews
 from dashboard import oauth
 from tracking.oura import views as oura_views
 from tracking import public_views
+from tracking import plan_views
+from tracking import journal_views
 
 urlpatterns = [
     path('privacy/', public_views.privacy, name='privacy'),
@@ -28,8 +30,12 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('manifest.webmanifest', views.manifest, name='manifest'),
     path('', views.overview, name='overview'),
+    path('plan/', plan_views.page, name='plan'),
     path('export/', exports.download, name='export'),
     path('trends/', trends.page, name='trends'),
+    path('journal/', journal_views.page, name='journal'),
+    path('journal/<uuid:entry_id>/', journal_views.detail, name='journal_detail'),
+    path('journal/<uuid:entry_id>/delete/', journal_views.remove, name='journal_delete'),
     path('reviews/', reviews.page, name='reviews'),
     path('reviews/<uuid:note_id>/delete/', reviews.remove, name='review_delete'),
     path('measurements/new/', views.measurement, name='measurement_new'),

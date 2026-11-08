@@ -5,6 +5,7 @@ import io
 import json
 import tempfile
 import zipfile
+from decimal import Decimal
 
 from django.db import transaction
 from django.http import HttpResponse
@@ -12,7 +13,8 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from .models import Measurement, SummaryRecord, ProgressPhoto, NutritionTargets, ReviewNote
+from .models import (Measurement, SummaryRecord, ProgressPhoto, NutritionTargets, ReviewNote,
+                     DietEntry, ClinicalItem, JournalEntry, JournalObservation, JournalCorrection)
 from .reviews import serialize_review
 from .photos import photo_metadata, photo_names, photo_storage
 from .services import serialize, _owner
@@ -42,6 +44,27 @@ def csv_bytes(rows, fields):
     return output.getvalue().encode('utf-8-sig')
 
 
+def _iso(value):
+    return value.isoformat() if value else None
+
+
+def _number(value):
+    if value is None:
+        return None
+    if isinstance(value, Decimal):
+        return format(value, 'f')
+    return value
+
+
+def _owned_rows(model, owner, include_synthetic):
+    query = model.objects.filter(owner=owner).order_by('pk')
+    if not include_synthetic:
+        query = query.filter(synthetic=False)
+    if query.count() > MAX_EXPORT_RECORDS:
+        raise ValueError('Export exceeds the local record limit. Use an operator backup.')
+    return list(query)
+
+
 def build_export(owner, include_synthetic=False):
     _owner(owner)
     if type(include_synthetic) is not bool:
@@ -53,7 +76,7 @@ def build_export(owner, include_synthetic=False):
         with transaction.atomic(), zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
             data = {'format': 'private-health-export-v1', 'exported_at': timezone.now().isoformat(),
                     'includes_synthetic': include_synthetic,
-                    'deletion_policy': 'Deleted measurements and summaries retain tombstones and audit history. Deleted photo bytes are absent.'}
+                    'deletion_policy': 'Deleted measurements and summaries retain tombstones and audit history. Deleted photo bytes are absent. Deleted journal text and observation values are removed from the active export. Diet and clinical rows are included as currently stored.'}
             selected = []
             for model in [Measurement, SummaryRecord, ProgressPhoto]:
                 query = model.objects.filter(owner=owner).order_by('pk')
@@ -85,6 +108,51 @@ def build_export(owner, include_synthetic=False):
             if reviews.count()>MAX_EXPORT_RECORDS:
                 raise ValueError('Export exceeds the local review limit.')
             data['reviews'] = [serialize_review(note) for note in reviews]
+            data['diet_entries'] = [{
+                'id': str(row.pk), 'local_date': row.local_date.isoformat(), 'meal': row.meal,
+                'description': row.description, 'calories': _number(row.calories), 'protein_g': _number(row.protein_g),
+                'fiber_g': _number(row.fiber_g), 'source_system': row.source_system,
+                'source_record_id': row.source_record_id, 'synthetic': row.synthetic,
+                'created_at': _iso(row.created_at), 'deleted_at': _iso(row.deleted_at),
+            } for row in _owned_rows(DietEntry, owner, include_synthetic)]
+            data['clinical_items'] = [{
+                'id': str(row.pk), 'kind': row.kind, 'name': row.name, 'detail': row.detail,
+                'recorded_on': row.recorded_on.isoformat(), 'current': row.current, 'synthetic': row.synthetic,
+                'created_at': _iso(row.created_at),
+            } for row in _owned_rows(ClinicalItem, owner, include_synthetic)]
+            journal_entries = _owned_rows(JournalEntry, owner, include_synthetic)
+            data['journal_entries'] = [{
+                'id': str(row.pk), 'channel': row.channel, 'local_date': row.local_date.isoformat(),
+                'occurred_at': _iso(row.occurred_at), 'time_precision': row.time_precision,
+                'source_timezone': row.source_timezone, 'captured_at': _iso(row.captured_at),
+                'body': None if row.deleted_at else row.body, 'processing_state': row.processing_state,
+                'protocol_version': row.protocol_version, 'lineage_id': str(row.lineage_id),
+                'synthetic': row.synthetic, 'version': row.version, 'deleted_at': _iso(row.deleted_at),
+            } for row in journal_entries]
+            observations = JournalObservation.objects.filter(entry__in=journal_entries).order_by('pk')
+            if observations.count() > MAX_EXPORT_RECORDS:
+                raise ValueError('Export exceeds the local journal limit. Use an operator backup.')
+            data['journal_observations'] = [{
+                'id': str(row.pk), 'entry_id': str(row.entry_id), 'domain_id': row.domain_id,
+                'metric_key': row.metric_key, 'value_state': row.value_state, 'value_type': row.value_type,
+                'value_json': None if row.deleted_at else row.value_json,
+                'narrative': None if row.deleted_at else row.narrative, 'subject': row.subject,
+                'local_date': row.local_date.isoformat(), 'source_timezone': row.source_timezone,
+                'confirmation_status': row.confirmation_status, 'registry_version': row.registry_version,
+                'lineage_id': str(row.lineage_id), 'synthetic': row.synthetic, 'version': row.version,
+                'deleted_at': _iso(row.deleted_at),
+            } for row in observations]
+            corrections = JournalCorrection.objects.filter(entry__in=journal_entries).select_related('request').order_by('pk')
+            if corrections.count() > MAX_EXPORT_RECORDS:
+                raise ValueError('Export exceeds the local journal limit. Use an operator backup.')
+            data['journal_corrections'] = [{
+                'entry_id': str(row.entry_id), 'observation_id': None if row.observation_id is None else str(row.observation_id),
+                'request_id': str(row.request.request_id), 'operation': row.operation,
+                'before_version': row.before_version, 'after_version': row.after_version,
+                'observation_before_version': row.observation_before_version,
+                'observation_after_version': row.observation_after_version,
+                'changed_fields': row.changed_fields, 'created_at': _iso(row.created_at),
+            } for row in corrections]
             total = 0
             def write(name, content):
                 nonlocal total
@@ -121,7 +189,14 @@ def build_export(owner, include_synthetic=False):
                 'notes', 'synthetic', 'version', 'imported_at', 'deleted_at']))
             write('summaries.csv', csv_bytes(data['summaries'], ['id', 'kind', 'local_date', 'source_timezone',
                 'source_system', 'source_record_id', 'entry_method', 'device', 'completeness', 'values', 'notes', 'synthetic', 'version', 'deleted_at']))
-            write('README.txt', b'Private health export v1\nContains sensitive data. Store privately.\nJSON preserves exact values, nulls, provenance, corrections and tombstones. CSV text beginning with spreadsheet formula characters has a protective apostrophe. Summary values are JSON objects with schema units documented in README.md.\nOriginal photo bytes may contain original metadata including location; normalized display images remove it. Deleted photo bytes are omitted. This export is not encrypted and is not a database backup.\n')
+            write('diet.csv', csv_bytes(data['diet_entries'], ['id', 'local_date', 'meal', 'description', 'calories',
+                'protein_g', 'fiber_g', 'source_system', 'source_record_id', 'synthetic', 'created_at', 'deleted_at']))
+            write('clinical.csv', csv_bytes(data['clinical_items'], ['id', 'kind', 'name', 'detail', 'recorded_on',
+                'current', 'synthetic', 'created_at']))
+            write('journal.csv', csv_bytes(data['journal_entries'], ['id', 'channel', 'local_date', 'occurred_at',
+                'time_precision', 'source_timezone', 'captured_at', 'body', 'processing_state', 'protocol_version',
+                'synthetic', 'version', 'deleted_at']))
+            write('README.txt', b'Private health export v1\nContains sensitive data. Store privately.\nJSON preserves exact values, nulls, provenance, corrections and tombstones. CSV text beginning with spreadsheet formula characters has a protective apostrophe. Summary values are JSON objects with schema units documented in README.md.\nDiet entries and clinical items are included. Journal JSON keeps the entry, observations, and correction field names. Deleted journal text is omitted.\nOriginal photo bytes may contain original metadata including location; normalized display images remove it. Deleted photo bytes are omitted. This export is not encrypted and is not a database backup.\n')
             storage = photo_storage()
             for photo in photos:
                 if photo.deleted_at:

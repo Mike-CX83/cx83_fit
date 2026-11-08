@@ -1,0 +1,35 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<p class="eyebrow">Journal</p><h1>{{ entry.local_date|date:'M j, Y' }}</h1>
+<p>{{ governing_line }}</p>
+<p>Captured {{ entry.captured_at|date:'M j, Y g:i A' }} {{ entry.source_timezone }}. {% if entry.occurred_at %}Occurred {{ entry.occurred_at|date:'M j, Y g:i A' }}.{% else %}Date only. No clock time was recorded.{% endif %} Version {{ entry.version }}.{% if entry.synthetic %} Synthetic.{% endif %}</p>
+{% if error %}<p class="notice">{{ error }}</p>{% endif %}
+<section class="panel"><h2>Entry</h2><p class="import-notes">{{ entry.body }}</p>
+{% if observation %}<p>{{ observation.domain_label }} · {{ observation.metric_key }} · {{ observation.value_state }}{% if observation.value_json %} · {{ observation.value_json.boolean|yesno:'yes,no' }}{% endif %}</p>
+{% if observation.narrative %}<p class="import-notes">{{ observation.narrative }}</p>{% endif %}
+<p>Observation version {{ observation.version }}. This is the observation you saved, not a score.</p>
+{% else %}<p>No structured observation is saved with this entry.</p>{% endif %}</section>
+<section class="panel"><h2>Correct</h2>
+<form method="post">{% csrf_token %}
+<input type="hidden" name="request_id" value="{{ request_id }}">
+<input type="hidden" name="expected_version" value="{{ entry.version }}">
+<input type="hidden" name="expected_observation_version" value="{% if observation %}{{ observation.version }}{% endif %}">
+{% if entry.synthetic %}<input type="hidden" name="synthetic" value="on">{% endif %}
+<p><label>Date <input name="local_date" required value="{{ entry.local_date|date:'Y-m-d' }}"></label></p>
+<p><label>Timezone <input name="source_timezone" value="{{ entry.source_timezone }}"></label></p>
+<p><label>Time with offset, optional <input name="occurred_at" value="{% if entry.occurred_at %}{{ entry.occurred_at.isoformat }}{% endif %}"></label></p>
+<p><label>Entry <textarea name="body" required maxlength="10000">{{ entry.body }}</textarea></label></p>
+<p><label>Domain <select name="domain_id"><option value="">No structured observation</option>{% for ident, label in domains %}<option value="{{ ident }}"{% if observation and observation.domain_id == ident %} selected{% endif %}>{{ ident }} {{ label }}</option>{% endfor %}</select></label></p>
+<p><label>Metric <select name="metric_key"><option value="">None</option>{% for key, spec in metrics %}<option value="{{ key }}"{% if observation and observation.metric_key == key %} selected{% endif %}>{{ spec.label }}</option>{% endfor %}</select></label></p>
+<p><label>State <select name="value_state"><option value="">None</option>{% for state in states %}<option value="{{ state }}"{% if observation and observation.value_state == state %} selected{% endif %}>{{ state }}</option>{% endfor %}</select></label></p>
+<p><label>Note <textarea name="narrative" maxlength="2000">{% if observation %}{{ observation.narrative }}{% endif %}</textarea></label></p>
+<p><label>Yes or no <select name="boolean"><option value="">Blank</option><option value="true"{% if observation and observation.value_json.boolean %} selected{% endif %}>Yes</option><option value="false"{% if observation and observation.metric_key == 'explicit_choice' and observation.value_state == 'observed' and not observation.value_json.boolean %} selected{% endif %}>No</option></select></label></p>
+<button>Save correction</button></form></section>
+<section class="panel"><h2>Delete</h2>
+<form method="post" action="{% url 'journal_delete' entry.id %}">{% csrf_token %}
+<input type="hidden" name="request_id" value="{{ request_id }}">
+<label><input type="checkbox" name="confirm_delete" value="yes" required> Remove this text from current storage</label>
+<button class="danger">Delete entry</button></form>
+<p>Deletion clears the active text and the observation value. A tombstone remains so a retry cannot restore it. Older backups keep their snapshots until a separate retention decision.</p>
+</section>
+<p><a href="{% url 'journal' %}{% if entry.synthetic %}?synthetic=1{% endif %}">Back to journal</a></p>
+{% endblock %}

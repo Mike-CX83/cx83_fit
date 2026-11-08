@@ -1,0 +1,28 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<p class="eyebrow">Journal</p><h1>Journal</h1>
+<p>Save the words you want to keep, and one explicit observation when you have one. Unknown stays unknown. This page does not score the entry or send it to another service.</p>
+<p>{{ governing_line }}</p>
+{% if error %}<p class="notice">{{ error }}</p>{% endif %}
+{% if synthetic %}<p class="notice">Synthetic entries are included.</p>{% endif %}
+<section class="panel"><h2>New entry</h2>
+<form method="post">{% csrf_token %}
+<input type="hidden" name="request_id" value="{{ request_id }}">
+<p><label>Date <input name="local_date" required value="{{ posted.local_date|default:'' }}" placeholder="YYYY-MM-DD"></label></p>
+<p><label>Timezone <input name="source_timezone" value="{{ posted.source_timezone|default:'America/Chicago' }}"></label></p>
+<p><label>Time with offset, optional <input name="occurred_at" value="{{ posted.occurred_at|default:'' }}" placeholder="2026-11-08T01:40:00-06:00"></label></p>
+<p><label>Entry <textarea name="body" required maxlength="10000">{{ posted.body|default:'' }}</textarea></label></p>
+<p><label>Domain <select name="domain_id"><option value="">No structured observation</option>{% for ident, label in domains %}<option value="{{ ident }}"{% if posted.domain_id == ident|stringformat:'s' %} selected{% endif %}>{{ ident }} {{ label }}</option>{% endfor %}</select></label></p>
+<p><label>Metric <select name="metric_key"><option value="">None</option>{% for key, spec in metrics %}<option value="{{ key }}"{% if posted.metric_key == key %} selected{% endif %}>{{ spec.label }}</option>{% endfor %}</select></label></p>
+<p><label>State <select name="value_state"><option value="">None</option>{% for state in states %}<option value="{{ state }}"{% if posted.value_state == state %} selected{% endif %}>{{ state }}</option>{% endfor %}</select></label></p>
+<p><label>Note <textarea name="narrative" maxlength="2000">{{ posted.narrative|default:'' }}</textarea></label></p>
+<p><label>Yes or no <select name="boolean"><option value="">Blank</option><option value="true"{% if posted.boolean == 'true' %} selected{% endif %}>Yes</option><option value="false"{% if posted.boolean == 'false' %} selected{% endif %}>No</option></select></label></p>
+<p><label><input type="checkbox" name="synthetic" value="on"> Synthetic test entry</label></p>
+<button>Save journal entry</button></form></section>
+<nav><a href="{% url 'journal' %}">Personal entries</a><a href="?synthetic=1">Include synthetic tests</a></nav>
+<section class="panel"><h2>Saved entries</h2>
+{% for entry in entries %}{% with observation=entry.observations.all|first %}
+<article><h3><a href="{% url 'journal_detail' entry.id %}{% if entry.synthetic %}?synthetic=1{% endif %}">{{ entry.local_date|date:'M j, Y' }}</a></h3>
+<p>{{ entry.time_precision }} · {{ entry.source_timezone }}{% if observation %} · {{ observation.domain_label }} · {{ observation.value_state }}{% else %} · No structured observation{% endif %}{% if entry.synthetic %} · Synthetic{% endif %}</p>
+<p class="import-notes">{{ entry.body|truncatechars:180 }}</p></article>
+{% endwith %}{% empty %}<p>No journal entries in this view.</p>{% endfor %}
+</section>{% endblock %}

@@ -233,6 +233,48 @@ class OuraRecord(models.Model):
         constraints = [models.UniqueConstraint(fields=['connection', 'collection', 'identity_key'], name='oura_unique_record')]
 
 
+class DietEntry(models.Model):
+    """One meal note inside the 90 day diary. Daily totals stay on nutrition summaries."""
+    MEALS = [('breakfast', 'Breakfast'), ('lunch', 'Lunch'), ('dinner', 'Dinner'), ('snack', 'Snack')]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    local_date = models.DateField()
+    meal = models.CharField(max_length=12, choices=MEALS)
+    description = models.TextField(max_length=500)
+    calories = models.DecimalField(max_digits=7, decimal_places=1, null=True, blank=True)
+    protein_g = models.DecimalField(max_digits=6, decimal_places=1, null=True, blank=True)
+    fiber_g = models.DecimalField(max_digits=6, decimal_places=1, null=True, blank=True)
+    source_system = models.CharField(max_length=40, default='manual')
+    source_record_id = models.CharField(max_length=120, blank=True)
+    synthetic = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-local_date', 'meal', 'id']
+        indexes = [models.Index(fields=['owner', 'local_date', 'synthetic'], name='diary_owner_date')]
+        constraints = [models.UniqueConstraint(fields=['owner', 'source_system', 'source_record_id'],
+            condition=~models.Q(source_record_id=''), name='unique_diary_source')]
+
+
+class ClinicalItem(models.Model):
+    """Current labs, medications and diagnoses. These stay available past the 90 day window."""
+    KINDS = [('lab', 'Lab'), ('medication', 'Medication'), ('diagnosis', 'Diagnosis')]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    kind = models.CharField(max_length=12, choices=KINDS)
+    name = models.CharField(max_length=120)
+    detail = models.TextField(blank=True, max_length=500)
+    recorded_on = models.DateField()
+    current = models.BooleanField(default=True)
+    synthetic = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['kind', 'name', '-recorded_on', 'id']
+        indexes = [models.Index(fields=['owner', 'kind', 'current'], name='clinical_owner_current')]
+
+
 class OuraRevision(models.Model):
     record = models.ForeignKey(OuraRecord, on_delete=models.CASCADE, related_name='revisions')
     version = models.PositiveIntegerField()
@@ -243,3 +285,89 @@ class OuraRevision(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['record', 'version'], name='oura_unique_revision')]
+
+
+class JournalEntry(models.Model):
+    """Authorized journal text. Structured facts live on JournalObservation.
+
+    Later memory, question, and score rows can reference this id. Those tables
+    are not created until their behavior is specified. Channel values mcp and
+    voice are reserved and rejected by the service until those clients exist.
+    """
+    CHANNELS = [('dashboard', 'Dashboard'), ('mcp', 'MCP'), ('voice', 'Voice')]
+    PROCESSING = [('stored', 'Stored'), ('pending_extraction', 'Pending extraction'),
+                  ('extracted', 'Extracted'), ('extraction_failed', 'Extraction failed')]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    request = models.OneToOneField(WriteRequest, on_delete=models.PROTECT, related_name='journal_entry')
+    channel = models.CharField(max_length=16, choices=CHANNELS, default='dashboard')
+    local_date = models.DateField()
+    occurred_at = models.DateTimeField(null=True, blank=True)
+    time_precision = models.CharField(max_length=8, default='date')
+    source_timezone = models.CharField(max_length=64, default='America/Chicago')
+    captured_at = models.DateTimeField(auto_now_add=True)
+    body = models.TextField(blank=True, max_length=10000)
+    body_sha256 = models.CharField(max_length=64, blank=True)
+    processing_state = models.CharField(max_length=24, choices=PROCESSING, default='stored')
+    protocol_version = models.CharField(max_length=32, default='journal-1')
+    lineage_id = models.UUIDField(default=uuid.uuid4, editable=False)
+    synthetic = models.BooleanField(default=False)
+    version = models.PositiveIntegerField(default=1)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-local_date', '-captured_at', 'id']
+        indexes = [models.Index(fields=['owner', 'local_date', 'synthetic'], name='journal_owner_date')]
+        constraints = [models.CheckConstraint(condition=models.Q(version__gte=1), name='journal_entry_version')]
+
+
+class JournalObservation(models.Model):
+    """One supported fact linked to its journal entry. Unknown stays null."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    entry = models.ForeignKey(JournalEntry, on_delete=models.CASCADE, related_name='observations')
+    domain_id = models.PositiveSmallIntegerField()
+    metric_key = models.CharField(max_length=40)
+    value_state = models.CharField(max_length=20)
+    value_type = models.CharField(max_length=16)
+    value_json = models.JSONField(null=True, blank=True)
+    narrative = models.TextField(blank=True, max_length=2000)
+    subject = models.CharField(max_length=16, default='self')
+    local_date = models.DateField()
+    source_timezone = models.CharField(max_length=64)
+    confirmation_status = models.CharField(max_length=16, default='confirmed')
+    registry_version = models.CharField(max_length=32, default='registry-1')
+    lineage_id = models.UUIDField(default=uuid.uuid4, editable=False)
+    synthetic = models.BooleanField(default=False)
+    version = models.PositiveIntegerField(default=1)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['local_date', 'id']
+        indexes = [models.Index(fields=['owner', 'domain_id', 'local_date'], name='journal_obs_domain')]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(domain_id__in=[12, 13, 14, 16, 17, 18, 19]), name='journal_obs_domain_id'),
+            models.CheckConstraint(condition=models.Q(version__gte=1), name='journal_obs_version'),
+        ]
+
+    def domain_label(self):
+        from .journal_registry import DOMAINS
+        return DOMAINS.get(self.domain_id, 'Recorded')
+
+
+class JournalCorrection(models.Model):
+    """Field names and versions only. Journal text is never copied here."""
+    entry = models.ForeignKey(JournalEntry, on_delete=models.CASCADE, related_name='corrections')
+    observation = models.ForeignKey(JournalObservation, null=True, blank=True, on_delete=models.SET_NULL, related_name='corrections')
+    request = models.OneToOneField(WriteRequest, on_delete=models.PROTECT, related_name='journal_correction')
+    operation = models.CharField(max_length=10)
+    before_version = models.PositiveIntegerField(null=True, blank=True)
+    after_version = models.PositiveIntegerField()
+    observation_before_version = models.PositiveIntegerField(null=True, blank=True)
+    observation_after_version = models.PositiveIntegerField(null=True, blank=True)
+    changed_fields = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']
