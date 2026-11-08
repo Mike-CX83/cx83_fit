@@ -24,9 +24,9 @@ IMPORT_SESSION_KEY = 'measurement_import_preview'
 @require_http_methods(['GET'])
 def manifest(request):
     # Public installation metadata only. No records, tokens or identity here.
-    return JsonResponse({'id':'/', 'name':'Personal Health', 'short_name':'Health',
+    return JsonResponse({'id':'/', 'name':'CX83 Fit', 'short_name':'CX83 Fit',
         'start_url':'/', 'scope':'/', 'display':'standalone',
-        'background_color':'#f5f7f3', 'theme_color':'#17332c', 'lang':'en-US'},
+        'background_color':'#F5F7FF', 'theme_color':'#080E22', 'lang':'en-US'},
         content_type='application/manifest+json')
 
 
