@@ -1,5 +1,33 @@
 # Verification checkpoint
 
+## Labs, meds, and diagnoses live, November 8, 3:21 AM CST
+
+Server commit `d4fd80f`. App container `ad48d4a2e237` restarted at `2026-11-08T09:21:00Z`. Shared proxy start remains `2026-10-10T17:40:21Z`. No migration and no Oura change.
+
+Anonymous `/records/` redirects to login. After owner sign-in, `/records/` contains the three empty current lists, `/` and `/more/` link to that page, `/plan/` links to it, and `/summaries/health/` is titled Lab results. Focused local tests passed: 19 tests in `tests.test_clinical`, `tests.test_plan`, and `tests.test_summaries`. A disposable browser at 390px saved a synthetic medication and marked it not current with no horizontal overflow. At 1440px, More used the desktop tabs and a 1120px column. No personal clinical text was entered. ChatGPT tool refresh and a physical phone check were not done.
+
+## Sobriety pattern live, November 8, 3:16 AM CST
+
+Server commit `1d89416`. Pre-migration snapshot `634478f2ca93166533f3864c0b088ed1470fa5e744e50aad940d810736ef9bc7`. Post-migration snapshot `bb56a59b66783f154f1a87c81a22896824d2e074a184fba929f101bdecfd30a0`. Migration `0009_sobrietyday` applied. Container `ad48d4a2e237` restarted at `2026-11-08T09:16:51Z`. Shared proxy start remains `2026-10-10T17:40:21Z`. Oura, MyFitnessPal, and the backup timer stayed active. Anonymous `/mcp` returned 401 and anonymous `/` returned 302. The pattern module imports. No personal check-in was entered. A ChatGPT session that already lists `read_sobriety_pattern` can call it. A session with an older tool list still needs a refresh.
+
+## Quieter Today layout live, November 8, 3:11 AM CST
+
+Server commit `9a2214e`. App container `ad48d4a2e237` restarted at `2026-11-08T09:11:32Z`. Proxy start unchanged at `2026-10-10T17:40:21Z`. No migration and no Oura change.
+
+Owner sign-in reached `/`, `/diary/`, `/plan/`, `/progress/`, and `/more/` with status 200. The live Today page contains "No check-in yet" and does not contain "Include synthetic" or "180.125". A disposable local browser, not a physical iPhone, showed no horizontal overflow at 390 on Today, Diary, Progress, and More; at 768 on Today; at 1440 on Plan; and at 1920 on Today. Large-monitor Today measured a 1360px column. `save_meal` and `read_watch_signals` are in the published tool file. At this checkpoint `read_sobriety_pattern` was named in the server file but its module was not mounted yet. The 3:16 AM checkpoint above is the one where that call became live.
+
+## Check-in and sobriety pattern alignment, November 8, 3:02 AM CST
+
+Documentation and the two project skills now use one check-in order. `read_journal_context` stays the opener, follow-ups, memory, and scores. `read_sobriety_pattern` stays the separate 14 day read. Daily State still excludes sobriety fields. No new test run was started for the wording pass. The tracker run remains the 274 passed tests, 17 skipped socket tests, recorded in `docs/CURSOR_HANDOFF.md`. Live hosting was not updated. ChatGPT still needs a tool refresh before it can call `read_sobriety_pattern`.
+
+## CX83 Fit layout and chrome pass, November 8, 2:56 AM CST
+
+Local application checks only. `.venv/bin/python scripts/verify_local.py` passed: 264 tests, 17 opt-in socket tests skipped. Covers the new shell (`/`, `/diary/`, `/progress/`, `/more/`), synthetic UI removal, and export always excluding synthetic rows. Migration `0009_sobrietyday` is present for the already-defined model and is allowlisted in backup counts. No production publish or personal-record check. Live hosting was not updated.
+
+## CX83 Fit daily UX, November 8, 2:30 AM CST
+
+Local application checks only. `.venv/bin/python scripts/verify_local.py` passed: 264 tests, 17 opt-in socket tests skipped. Covered routes include `/`, `/diary/`, `/plan/`, `/progress/`, journal, summaries, reviews, trends, and import receipt pages after the daily UX strip. No production publish, migration, or personal-record check. Live `live.cx83labs.com` was not updated in this pass.
+
 ## Continuity, writes, and governing document, November 8, 2:26 AM CST
 
 Backup snapshot `f7e36b03659898b419c15c8b73f40ca7f85bb256ea5cf05ce57d87acaf2d9655` completed before the migration. Server commit `564b06b`. Migration `0008_journal_continuity` applied. New app container `ad48d4a2e237` started `2026-11-08T08:26:06Z`. Shared proxy `896e154e5916` still started `2026-10-10T17:40:21Z`. Twenty containers remained. Oura, MyFitnessPal, and the backup timer stayed active. `MCP_WRITES_ENABLED` is 1. `OURA_ENABLED` is 0. `tracking_journalentry` count stayed 0.

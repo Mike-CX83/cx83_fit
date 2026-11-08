@@ -1,5 +1,45 @@
 # Cursor continuation handoff
 
+## Labs, meds, and diagnoses live, November 8, 2026, 3:21 AM CST
+
+Published to `live.cx83labs.com`. Server commit `d4fd80f`. App container restarted in place (`ad48d4a2e237`, start `2026-11-08T09:21:00Z`). Shared proxy start remains `2026-10-10T17:40:21Z`. No migration. `OURA_ENABLED` stays 0.
+
+`/records/` is the current list of labs, medications, and diagnoses. Today and More link to it. Plan links to it instead of holding the long form. Numeric results with a unit and a supplied reference range stay at `/summaries/health/`, titled Lab results. ChatGPT tools are `read_clinical_items`, `save_clinical_item`, and `stop_clinical_item` on the existing `health:read` connection. A repeated request replays. The receipt keeps the id and kind, not the name or detail. A new lab with the same name replaces the current result and keeps the older row.
+
+Owner pages `/records/`, `/`, `/more/`, `/summaries/health/`, and `/plan/` returned the new copy. Anonymous `/records/` redirects to login. Focused tests passed: 19 tests across clinical, plan, and summaries. A disposable phone-width browser saved a synthetic medication and marked it not current, with no horizontal overflow. Laptop-width More stayed inside 1120. This was not a physical phone or a Dot voice check. ChatGPT needs a tool refresh before the new tools appear.
+
+## Sobriety pattern live, November 8, 2026, 3:16 AM CST
+
+Published to `live.cx83labs.com`. Server commit `1d89416`. Pre-migration backup snapshot `634478f2ca93166533f3864c0b088ed1470fa5e744e50aad940d810736ef9bc7`. Post-migration snapshot `bb56a59b66783f154f1a87c81a22896824d2e074a184fba929f101bdecfd30a0`. Migration `tracking.0009_sobrietyday` applied. App container restarted in place (`ad48d4a2e237`, start `2026-11-08T09:16:51Z`). Shared proxy start remains `2026-10-10T17:40:21Z`. Oura, MyFitnessPal, and the backup timer stayed active. `OURA_ENABLED` stays 0. Anonymous `/mcp` returned 401 and anonymous `/` returned 302. The module imports and the table is `tracking_sobrietyday`.
+
+`read_sobriety_pattern` was already named in the live server file. The missing module is now mounted, so a ChatGPT session that already lists that tool can call it. A session that cached an older tool list still needs a refresh. One check-in a day is enough. Oura remains disconnected, so off-wrist stays idle until that connection is authorized.
+
+## Quieter Today layout live, November 8, 2026, 3:11 AM CST
+
+Published to `live.cx83labs.com`. Server commit `9a2214e`. App container restarted in place (`ad48d4a2e237`, start `2026-11-08T09:11:32Z`). Shared proxy start remains `2026-10-10T17:40:21Z`. No migration. `OURA_ENABLED` stays 0.
+
+Live owner pages `/`, `/diary/`, `/plan/`, `/progress/`, and `/more/` returned 200. Today shows the check-in line and does not show the synthetic-test toggle or the synthetic 180.125 lb weight. ChatGPT can save a meal with `save_meal` and read one day's facts with `read_watch_signals` after a tool refresh. That read does not score relapse.
+
+`read_sobriety_pattern` is registered in the same server file. The 3:16 AM note above is the publish that mounted the module and applied migration `0009`.
+
+Local browser check on a disposable signed-in server, not a physical phone: 390 Today, Diary, Progress, and More had no horizontal overflow. 768 Today used the desktop tabs and stayed inside the window. 1440 Plan stayed inside 1120. 1920 Today used a 1360 column and two meal columns. Dot voice was not tested.
+
+## Sobriety pattern, November 8, 2026
+
+Local only. `read_sobriety_pattern` recomputes a 14 day tracker from journal, scores, ring and watch wear, recovery, training, nutrition, and measurements, with 3 and 7 day slices. No sobriety button. A blank day stays unknown. Off-wrist is a connected device that was not worn, separate from a stale sync. Domain 12 accepts craving, confidence, access, and use. Migration `tracking.0009_sobrietyday` is in the tree and was not applied on the live server. Morning and evening can both be saved. One check-in covers the day. A check-in reads the pattern after `read_journal_context` and before the follow-ups. The pattern is spoken only when the day is rising or high, a device is off-wrist, a use is in the window, or a run is open. It is not part of Daily State. Skills: `.cursor/skills/personal-health-dashboard/SKILL.md` and `.cursor/skills/sobriety-pattern/SKILL.md`. Note: `docs/BODY_SCAN_RESEARCH.md`. `.venv/bin/python scripts/verify_local.py` passed: 274 tests, 17 opt-in socket tests skipped. ChatGPT will not see `read_sobriety_pattern` until the tool list is refreshed. This was not published.
+
+## CX83 Fit layout and chrome pass, November 8, 2026, 2:56 AM CST
+
+Local only. Compact header, quiet Sign out, phone bottom tabs (Today / Diary / Progress / More), desktop top tabs, More as its own page, slim footer. Today is a calorie hero, compact chips, and meal sections with Add links into Diary prefills. Amber flare `#F59E0B` is limited to the active tab / date underline, calories remaining, and Add links. User-facing Synthetic labels and the export synthetic checkbox are gone; `?synthetic=1` still works for tests. Export always excludes synthetic rows. Also allowed the pre-existing `SobrietyDay` model through migration `0009` and the backup table list so local checks stay green. No live publish.
+
+`.venv/bin/python scripts/verify_local.py` passed: 264 tests, 17 opt-in socket tests skipped.
+
+## CX83 Fit daily UX, November 8, 2026, 2:30 AM CST
+
+Local only. No deploy, migration, model change, or ChatGPT scope change. Primary nav is Today, Diary, Plan, Progress, More. Today shows calories, protein, fiber, steps, and weight against goals. Meal entry moved to `/diary/`. Plan keeps the 90 day window, goals, trends, and clinical items. Measurements and photos live under Progress. Synthetic toggles and operator essays left the normal screens; `?synthetic=1` still works for tests. Purple marks the active nav item. Protein uses the purple to pink goal bar. Yellow is only for close or flagged values. Electric Blue stays the button color.
+
+`.venv/bin/python scripts/verify_local.py` passed: 264 tests, 17 opt-in socket tests skipped. Live hosting still serves the prior layout until a separate publish.
+
 ## Continuity, writes, and governing document, November 8, 2026, 2:26 AM CST
 
 Pre-migration backup snapshot `f7e36b03659898b419c15c8b73f40ca7f85bb256ea5cf05ce57d87acaf2d9655`. Then published memory, morning and evening check-ins, optional scores, and the private governing document. Server commit `564b06b`. Migration `tracking.0008_journal_continuity` applied. The app container was recreated (`ad48d4a2e237`, start `2026-11-08T08:26:06Z`) so `MCP_WRITES_ENABLED=1`. Shared proxy start remains `2026-10-10T17:40:21Z`. Twenty containers stayed up. Oura, MyFitnessPal, and the backup timer stayed active. `OURA_ENABLED` stays 0 because the server has no Oura client secret or token key. Journal row count stayed 0.
