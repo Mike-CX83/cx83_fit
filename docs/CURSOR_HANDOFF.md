@@ -1,5 +1,15 @@
 # Cursor continuation handoff
 
+## Your Headroom live, November 8, 2026, 3:40 AM CST
+
+Published to `live.cx83labs.com`. Server commit `0808ae8`. App container restarted in place (`ad48d4a2e237`, start `2026-11-08T09:39:59Z`). Shared proxy start remains `2026-10-10T17:40:21Z`. No migration. `OURA_ENABLED` stays 0. The product name stays CX83 Fit. Steady is only the working name direction.
+
+Your Headroom is the first block on Today. The number is Daily State (`daily-state-1`), 0 to 100, higher meaning more capacity. Steady is 70 and above, Stretched is 40 through 69.99, and Running low is below 40. Fewer than two of mood, energy, and focus leaves the score blank. Sleep under 360 minutes, food under half a saved calorie goal, a missing meal on a stretched or low day, low confirmed ratings, and steps under half a saved goal can explain the day and choose the next action. They do not change the number. Anger, loneliness, and stress are not collected. A change line appears only when another scored day exists in the last 14 days, and a move under 5 points stays "about the same."
+
+ChatGPT can call `read_headroom` on `health:read` after a tool refresh. AI inside the web app and accountability-partner texts are recorded as later work in `docs/journal-intelligence-handoff/06-PHASES-AND-ACCEPTANCE.md`. Neither is built. No text was sent.
+
+Focused tests passed: 13 tests across `tests.test_headroom`, `tests.test_journal_continuity`, and `tests.test_today_signals`. A disposable browser showed 25.00 and Running low only with synthetic ratings and a 4 hour sleep record, and the personal page without that flag stayed "Not enough to score." The eat action opened the diary for that date. Phone width 390 and laptop width 1440 had no horizontal overflow. Laptop Today used two columns inside 1120. This was not a physical phone check. The live owner page contains the Headroom heading and the scale sentence. Personal score text was not copied here.
+
 ## Labs, meds, and diagnoses live, November 8, 2026, 3:21 AM CST
 
 Published to `live.cx83labs.com`. Server commit `d4fd80f`. App container restarted in place (`ad48d4a2e237`, start `2026-11-08T09:21:00Z`). Shared proxy start remains `2026-10-10T17:40:21Z`. No migration. `OURA_ENABLED` stays 0.

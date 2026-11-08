@@ -1,5 +1,11 @@
 # Verification checkpoint
 
+## Your Headroom live, November 8, 3:40 AM CST
+
+Server commit `0808ae8`. App container `ad48d4a2e237` restarted at `2026-11-08T09:39:59Z`. Shared proxy start remains `2026-10-10T17:40:21Z`. No migration and no Oura change.
+
+`tests.test_headroom`, `tests.test_journal_continuity`, and `tests.test_today_signals` passed: 13 tests. Covered cases: no score without two ratings, 6 and 8 staying 70.00 and Steady, one low rating staying blank, short sleep leaving an 80.00 score unchanged, a 14 day drop, a move under 5 points staying about the same, food under half a saved goal, missing sleep not called short, and synthetic rows hidden from the personal page. A disposable browser at 390px showed the synthetic card at 25.00 Running low, no horizontal overflow, and the eat link opened `/diary/` with the same date. At 1440px the card was two columns, the main column was 1120px, and overflow was false. The personal preview without `synthetic=1` said Not enough to score. Live owner `/` returned 200 and contained Your Headroom, the 0 to 100 scale, and Start here. Personal values were not recorded. No AI check-in and no text alert were added.
+
 ## Labs, meds, and diagnoses live, November 8, 3:21 AM CST
 
 Server commit `d4fd80f`. App container `ad48d4a2e237` restarted at `2026-11-08T09:21:00Z`. Shared proxy start remains `2026-10-10T17:40:21Z`. No migration and no Oura change.
