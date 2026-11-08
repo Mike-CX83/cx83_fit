@@ -2,7 +2,7 @@
 
 ## Lifted chrome and Holding Space confirmed live, November 8, 2026, 4:27 AM CST
 
-The lifted navy chrome, Electric Blue header mark, and Holding Space were already on `live.cx83labs.com` from the 4:21 AM publish. This pass copied the remaining More page icons and the install-screen color `#16233C`. Migration `0010` was already applied. No new migration. No text was sent. `SMS_ENABLED` stays unset. The app container is restarted only for the manifest change. The shared proxy is not restarted.
+The lifted navy chrome, Electric Blue header mark, and Holding Space were already on `live.cx83labs.com` from the 4:21 AM publish. This pass copied the remaining More page icons and the install-screen color `#16233C`. Server commit `f3932ae`. App container `933f44f1a1eb` restarted at `2026-11-08T10:27:59Z`. Migration `0010` was already applied. No new migration. No text was sent. `SMS_ENABLED` stays unset. Shared proxy start remains `2026-10-10T17:40:21Z`. Public login shows `shell-8` and `symbol-light.svg`. The manifest theme is `#16233C`. Anonymous `/holding/` returns 302. Anonymous `/mcp` returns 401.
 
 ## Headspace and Holding Space, November 8, 2026, 4:21 AM CST
 

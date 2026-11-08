@@ -2,7 +2,7 @@
 
 ## Lifted chrome and Holding Space confirmed live, November 8, 4:27 AM CST
 
-Host files for the chrome, Today, and Holding Space already matched this checkout. More page icons and the web app manifest color `#16233C` were the two differences and are now on the host. Migration `0010` was already applied. No text was sent.
+Host files for the chrome, Today, and Holding Space already matched this checkout. More page icons and the web app manifest color `#16233C` were the two differences. Server commit `f3932ae`. App container `933f44f1a1eb` restarted at `2026-11-08T10:27:59Z`. Shared proxy start remains `2026-10-10T17:40:21Z`. Public `https://live.cx83labs.com/login/` returns 200 and contains `shell-8` and `symbol-light.svg`. The manifest background and theme are `#16233C`. Anonymous `/holding/` returns 302. Anonymous `/mcp` returns 401. Migration `0010` was already applied. No text was sent. Oura, MyFitnessPal, and the backup timer stayed active.
 
 ## Headspace and Holding Space, November 8, 4:21 AM CST
 
