@@ -11,7 +11,7 @@
     <p class="hero-value">{% if headroom.score %}{{ headroom.score }}{% else %}—{% endif %}</p>
     <p class="headroom-status">{{ headroom.status_label }}</p>
   </div>
-  <div class="goal-bar capacity{% if headroom.bar == None %} is-empty{% endif %}"><span style="width:{% if headroom.bar != None %}{{ headroom.bar|floatformat:0 }}{% else %}0{% endif %}%"></span></div>
+  <div class="goal-bar capacity{% if headroom.bar == None %} is-empty{% endif %}" role="progressbar" aria-label="Headspace Daily State" aria-valuemin="0" aria-valuemax="100" {% if headroom.bar == None %}aria-valuetext="Not enough to score"{% else %}aria-valuenow="{{ headroom.bar|floatformat:0 }}"{% endif %}><span{% if headroom.bar != None %} class="w-{{ headroom.bar|floatformat:0 }}"{% endif %}></span></div>
   <p class="action-line">{% if headroom.action.href %}<a class="banner-action" href="{{ headroom.action.href }}">{{ headroom.action.label }}</a>{% else %}<span class="banner-action">{{ headroom.action.label }}</span>{% endif %}</p>
   <details class="fold">
     <summary>Details</summary>
@@ -33,7 +33,7 @@
         · goal {{ metrics.calories.goal }}
       </p>
       {% if metrics.calories.bar != None %}
-        <div class="goal-bar{% if metrics.calories.near_goal %} flare{% endif %}"><span style="width:{{ metrics.calories.bar|floatformat:0 }}%"></span></div>
+        <div class="goal-bar{% if metrics.calories.near_goal %} flare{% endif %}" role="progressbar" aria-label="Calories" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ metrics.calories.bar|floatformat:0 }}"><span class="w-{{ metrics.calories.bar|floatformat:0 }}"></span></div>
       {% endif %}
     {% endif %}
   {% else %}
@@ -50,7 +50,7 @@
     {% if chip.logged %}
       <p class="chip-value">{{ chip.value }}{% if chip.unit %} <span>{{ chip.unit }}</span>{% endif %}</p>
       <p class="chip-sub">{% if chip.goal %}/ {{ chip.goal }}{% elif chip.sub %}{{ chip.sub }}{% else %}&nbsp;{% endif %}</p>
-      {% if chip.bar != None %}<div class="goal-bar thin{% if chip.protein %} protein{% endif %}{% if chip.attention %} attention{% endif %}"><span style="width:{{ chip.bar|floatformat:0 }}%"></span></div>{% endif %}
+      {% if chip.bar != None %}<div class="goal-bar thin{% if chip.protein %} protein{% endif %}{% if chip.attention %} attention{% endif %}" role="progressbar" aria-label="{{ chip.label }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ chip.bar|floatformat:0 }}"><span class="w-{{ chip.bar|floatformat:0 }}"></span></div>{% endif %}
     {% else %}
       <p class="chip-value muted">—</p>
       <p class="chip-sub">{% if chip.goal %}goal {{ chip.goal }}{% else %}&nbsp;{% endif %}</p>

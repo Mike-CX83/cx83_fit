@@ -91,7 +91,20 @@ details.fold[open]>summary::before{transform:rotate(90deg)}
 
 .goal-bar{margin-top:12px;height:8px;border-radius:999px;background:#3A4E78;overflow:hidden}
 .goal-bar.thin{margin-top:0;height:4px}
-.goal-bar>span{display:block;height:100%;border-radius:inherit;background:var(--accent);max-width:100%}
+.metric-chip .goal-bar.thin{box-sizing:border-box;height:14px;padding-top:10px}
+.metric-chip .goal-bar.thin>span{height:4px}
+.goal-bar>span{display:block;height:100%;width:0%;max-width:100%;border-radius:inherit;background:var(--accent)}
+.goal-bar>span.w-0{width:0%}.goal-bar>span.w-1{width:1%}.goal-bar>span.w-2{width:2%}.goal-bar>span.w-3{width:3%}.goal-bar>span.w-4{width:4%}.goal-bar>span.w-5{width:5%}.goal-bar>span.w-6{width:6%}.goal-bar>span.w-7{width:7%}.goal-bar>span.w-8{width:8%}.goal-bar>span.w-9{width:9%}.goal-bar>span.w-10{width:10%}
+.goal-bar>span.w-11{width:11%}.goal-bar>span.w-12{width:12%}.goal-bar>span.w-13{width:13%}.goal-bar>span.w-14{width:14%}.goal-bar>span.w-15{width:15%}.goal-bar>span.w-16{width:16%}.goal-bar>span.w-17{width:17%}.goal-bar>span.w-18{width:18%}.goal-bar>span.w-19{width:19%}.goal-bar>span.w-20{width:20%}
+.goal-bar>span.w-21{width:21%}.goal-bar>span.w-22{width:22%}.goal-bar>span.w-23{width:23%}.goal-bar>span.w-24{width:24%}.goal-bar>span.w-25{width:25%}.goal-bar>span.w-26{width:26%}.goal-bar>span.w-27{width:27%}.goal-bar>span.w-28{width:28%}.goal-bar>span.w-29{width:29%}.goal-bar>span.w-30{width:30%}
+.goal-bar>span.w-31{width:31%}.goal-bar>span.w-32{width:32%}.goal-bar>span.w-33{width:33%}.goal-bar>span.w-34{width:34%}.goal-bar>span.w-35{width:35%}.goal-bar>span.w-36{width:36%}.goal-bar>span.w-37{width:37%}.goal-bar>span.w-38{width:38%}.goal-bar>span.w-39{width:39%}.goal-bar>span.w-40{width:40%}
+.goal-bar>span.w-41{width:41%}.goal-bar>span.w-42{width:42%}.goal-bar>span.w-43{width:43%}.goal-bar>span.w-44{width:44%}.goal-bar>span.w-45{width:45%}.goal-bar>span.w-46{width:46%}.goal-bar>span.w-47{width:47%}.goal-bar>span.w-48{width:48%}.goal-bar>span.w-49{width:49%}.goal-bar>span.w-50{width:50%}
+.goal-bar>span.w-51{width:51%}.goal-bar>span.w-52{width:52%}.goal-bar>span.w-53{width:53%}.goal-bar>span.w-54{width:54%}.goal-bar>span.w-55{width:55%}.goal-bar>span.w-56{width:56%}.goal-bar>span.w-57{width:57%}.goal-bar>span.w-58{width:58%}.goal-bar>span.w-59{width:59%}.goal-bar>span.w-60{width:60%}
+.goal-bar>span.w-61{width:61%}.goal-bar>span.w-62{width:62%}.goal-bar>span.w-63{width:63%}.goal-bar>span.w-64{width:64%}.goal-bar>span.w-65{width:65%}.goal-bar>span.w-66{width:66%}.goal-bar>span.w-67{width:67%}.goal-bar>span.w-68{width:68%}.goal-bar>span.w-69{width:69%}.goal-bar>span.w-70{width:70%}
+.goal-bar>span.w-71{width:71%}.goal-bar>span.w-72{width:72%}.goal-bar>span.w-73{width:73%}.goal-bar>span.w-74{width:74%}.goal-bar>span.w-75{width:75%}.goal-bar>span.w-76{width:76%}.goal-bar>span.w-77{width:77%}.goal-bar>span.w-78{width:78%}.goal-bar>span.w-79{width:79%}.goal-bar>span.w-80{width:80%}
+.goal-bar>span.w-81{width:81%}.goal-bar>span.w-82{width:82%}.goal-bar>span.w-83{width:83%}.goal-bar>span.w-84{width:84%}.goal-bar>span.w-85{width:85%}.goal-bar>span.w-86{width:86%}.goal-bar>span.w-87{width:87%}.goal-bar>span.w-88{width:88%}.goal-bar>span.w-89{width:89%}.goal-bar>span.w-90{width:90%}
+.goal-bar>span.w-91{width:91%}.goal-bar>span.w-92{width:92%}.goal-bar>span.w-93{width:93%}.goal-bar>span.w-94{width:94%}.goal-bar>span.w-95{width:95%}.goal-bar>span.w-96{width:96%}.goal-bar>span.w-97{width:97%}.goal-bar>span.w-98{width:98%}.goal-bar>span.w-99{width:99%}.goal-bar>span.w-100{width:100%}
+.goal-bar.is-empty>span{width:0%}
 .goal-bar.protein>span{background:var(--purple)}
 .goal-bar.attention>span{background:var(--yellow)}
 .goal-bar.flare>span{background:linear-gradient(90deg,var(--flare),var(--flare-deep))}
