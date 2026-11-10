@@ -36,6 +36,7 @@ This is a focused extension of CX83 Fit. Keep its Django application, private st
 8. Research alcohol recovery first. Keep a common architecture for other substances, gambling, and compulsive behaviors, but require separate validation and appropriate terminology for each.
 9. Preserve medical records privately, then select relevant context. Importing a record does not make it a daily scoring input.
 10. Keep location and automatic partner notifications on the future roadmap. Record the consent and data contracts needed now without implementing them.
+11. The [data integrity and consent based notification proposal](06_BUILD_PLAN.md#proposal-data-integrity-and-consent-based-notifications) covers pre-action recipient/disclosure previews, routine-edit exclusions, specific consent, safe exit, and uncertainty. It is one deduplicated proposal, not an enabled feature.
 
 ## Recommended approach
 
@@ -51,7 +52,7 @@ No production ready, independently validated open source package covering this e
 
 ## Relationship to existing work
 
-The general product roadmap remains `docs/ROADMAP.md` in the owning working checkout. The original journal architecture remains `docs/journal-intelligence-handoff/00-MASTER-BUILD-BRIEF.md` there. Those two working documents were not present on GitHub main when inspected, so they are named here rather than linked to missing files. This Headspace package is self-contained, records the later November 10 request, and refines the next Headspace milestone. It does not silently change current runtime behavior or replace unrelated roadmap sections.
+The general product roadmap remains `docs/ROADMAP.md` in the owning working checkout. The original journal architecture remains `docs/journal-intelligence-handoff/00-MASTER-BUILD-BRIEF.md` there. Those two working documents were not present on GitHub main when inspected, so they are named here rather than linked to missing files. This Headspace package is self-contained, records the later November 10 request, and refines the next Headspace milestone. It does not silently change current runtime behavior or replace unrelated roadmap sections. **H0 through H7 in [06_BUILD_PLAN.md](06_BUILD_PLAN.md#milestones) is the sole authoritative delivery sequence.** Older roadmap M labels are retained only as feature references; partner implementation cannot precede H6 completion. The actual untracked roadmap cannot be written from this session. Its exact proposed reconciliation is supplied in [handoffs/ROADMAP-reconciliation.patch](handoffs/ROADMAP-reconciliation.patch), with safe application and verification details in [handoffs/README.md](handoffs/README.md). Until the existing owner applies that patch, the checkout still contains the older ordering; this paragraph does not claim it was updated.
 
 Current code inspected: `tracking/headroom.py`, `tracking/journal_continuity.py`, and `tracking/sobriety_pattern.py`. The current Daily State is based on confirmed mood, energy, and focus ratings; the displayed boundaries are 70 and 40. Sleep, food, and steps currently explain that result rather than changing its number. The existing sobriety pattern is separate. Keep those versioned results until an evaluated replacement is accepted.
 

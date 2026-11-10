@@ -63,6 +63,14 @@ The existing 70 and 40 boundaries can be retained only as initial evaluation bin
 
 Fabricated full-profile calculation: J=60, S=50, N=80, R=75 gives H=61.5, provisionally Stretched. If S is temporarily missing, observed coverage is 80% and the internal result is 64.375, explicitly missing sleep. If J is missing, no fresh Headspace is issued even if all device values look favorable. A journal-only J=70 is Steady based on the check-in, not a claim that every health domain is covered.
 
+## Proposed evidence removal safeguard
+
+Documentation proposal only. Correction, deletion, disconnection, source failure, and profile change are separate events. Recompute affected results with explicit input revisions and coverage; invalidate dependent reasons or trends that no longer have a permitted evidence basis. A missingness-only recalculation must not be displayed as improved health or recovery, even if renormalization raises its internal number or crosses a state boundary. Show reduced evidence and a noncomparable or provisional result; if the display cannot explain that faithfully, withhold the new current state. Do not keep deleted values active to enforce a penalty.
+
+For example, J=70 and S=20 in the journal/recovery profile yield 57.5 with the candidate weights normalized to that profile. Removing S leaves a mathematical J=70 but does not demonstrate a move from Stretched to Steady. Show the sleep gap and changed coverage rather than an improvement claim. A deliberate move to journal-only mode is permitted, recorded as a new profile segment, and not charted as recovery from the full-profile result. A validated correction replacing an erroneous measurement can legitimately change the state, with its revision identified.
+
+Add replay cases for a removed low component, a removed high component, a valid correction, duplicate cleanup, a comparable fallback, and changed profiles. Test both numeric results and the state word, reasons, chart continuity, and optional assistant explanation. Do not allow any of those surfaces to turn absent evidence into reassurance or a substance-use allegation. The [notification proposal](06_BUILD_PLAN.md#proposal-data-integrity-and-consent-based-notifications) is separate, deferred to H7, and never follows merely from a coverage change.
+
 ## Recovery concerns cannot be averaged away
 
 Use separate explicit observations for each chosen behavior: urge intensity, coping confidence or perceived control, access to personally defined triggers, recent behavior, support actions, and meaningful routine changes. Candidate rules should consider combinations and time, not a single universal factor.

@@ -23,6 +23,8 @@ Keep raw observations, normalized facts, derived features, and results distingui
 
 ## Milestones
 
+**Authoritative delivery sequence: H0 through H7.** The older M1 through M9 labels in `docs/ROADMAP.md` are retained only as feature references, not a second execution order. In particular, the partner-first M1 dependency is superseded. Existing dashboard and scoped external-assistant foundation work may continue without building a partner dashboard or paid assistant. H0 dependencies gate affected work; H1 remains useful without a new device.
+
 | Milestone | Concrete deliverable | Exit evidence |
 | --- | --- | --- |
 | H0: inspect and stabilize dependencies | Current source inventory, existing journal behavior, account/synthetic separation, tombstones, and live tool capabilities | Read current handoff; verify active projection fixes independently; keep dirty work and draft maintenance changes separate |
@@ -119,8 +121,70 @@ Automatic notifications are future work after Headspace validation. They need se
 
 Location remains deferred. Preserve room for optional owner-named place events and quality metadata. Do not collect continuous location now or infer addiction from visiting a location. Background iPhone behavior requires its own native capability and consent review.
 
+### Proposal: data integrity and consent based notifications
+
+Recorded November 10, 2026. **Proposed only, not implemented or enabled.** Mailbox request `msg-e86810f3` and the owner's follow-up describe one addition, deduplicated here. This section owns the notification proposal; `docs/ROADMAP.md` keeps the ideas index and links here. H0 through H6 may define provenance and evaluate owner-facing uncertainty, but the partner dashboard and all live partner notification work remain behind H7 and its review gates.
+
+The objective is resistance to manipulation and transparent uncertainty. It is not a foolproof guarantee, a lie detector, or proof of substance use. A person can correct records, choose privacy, stop tracking, and withdraw sharing. Neutral language describes what changed and what is now unknown, never a person's honesty or motives.
+
+#### Event categories and pre-action preview
+
+Before completing an intentional disconnection of a selected source or deletion of a selected important input, show a preview based on the current grants. List each named, authorized recipient, the exact message that person would receive, any separately accessible detail, the channel, and the intended timing. If nobody is eligible, say that no partner will be notified. Let the owner cancel, continue under the displayed policy, or review and withdraw sharing through a safe exit. Do not make a notification the price of exercising deletion or revocation rights.
+
+| Event | Proposed treatment |
+| --- | --- |
+| Intentional disconnection of a selected device or data source | Preview only the specifically authorized source-availability notification; do not describe an inferred reason for disconnecting |
+| Deletion of selected important evidence | Preview only when the versioned category policy and both parties' current consent permit it; examples include a relevant clinical record or records supporting a sustained sleep or resting-heart-rate trend |
+| Ordinary correction, duplicate cleanup, or deletion of a food entry | Routine editing, with appropriate score recomputation; no automatic concealment label or partner notification |
+| Outage, delayed sync, battery failure, non-wear, or unknown cause | Availability status and coverage update; never reclassify automatically as intentional disconnection |
+| Disability, changed routine, planned pause, or legitimate privacy choice | Respect the selected context and review expectations without a behavioral or moral penalty |
+| Withdrawal of sharing or access | Immediate enforcement and safe exit; no covert or unavoidable notification to the removed partner |
+
+Importance is an explicit, versioned relevance rule for a selected profile and window, not a label inferred by AI or by how alarming a record sounds. Clinical records are context in the initial model, not automatically weighted inputs. Define how a batch deletion, account closure, source replacement, and deletion of a duplicate representation interact with that rule. User reasons are optional. Do not claim that an absent signal proves intentional removal.
+
+Illustrative minimum-detail message: "A selected data source was disconnected. Current coverage may be reduced." Naming the source, a lab, a journal, a date range, a metric value, or the reason for removal needs its own applicable permission and must appear in that recipient's exact preview. Even existence and timing can reveal sensitive information. No new permission is created by this example.
+
+#### Specific consent and safe exit
+
+Partner setup must explain the same event categories before activation. Record owner authorization separately from recipient acceptance and channel consent. For each recipient, show the selected categories, exact detail levels, timing or batching rules, scope and duration, channels, how to review permissions, how to pause notifications, and how to withdraw. An invitation, verified phone, generic terms agreement, or payment is not this consent. Material expansion requires a new understandable choice, not a silent policy revision.
+
+Recheck permissions when an event is committed and again immediately before dispatch. If recipients or disclosure change after preview, require a new preview and confirmation; never send a broader or differently addressed message. Revocation takes effect immediately and cancels queued or retrying messages to that recipient. Recipient opt-out stops the relevant channel. Do not delay safe exit for partner acknowledgment or require partner approval. Explain that a message already delivered outside the service cannot be recalled, while avoiding a new disclosure that the owner withdrew access.
+
+Assess coercive partner dynamics and shared-device exposure. A partner must not be able to lock tracking on, condition deletion on approval, obtain raw data from an event receipt, or use billing to retain access. Keep permission-review and safe-exit controls available without contacting the unsafe partner. Review notification previews themselves for privacy on a shared screen.
+
+#### Evidence lifecycle and score coverage
+
+Use the [observation and change contracts](03_DATA_AND_INTEGRATIONS.md#proposed-evidence-change-contract) and [coverage safeguard](02_SCORING_AND_VALIDATION.md#proposed-evidence-removal-safeguard). Study provenance, correction and deletion events, source availability, and superseded derived results. A removed or lost input must not silently improve the apparent Headspace state. Missing evidence is unknown, neither good health nor proof of relapse. A legitimate correction can improve a result when supported by corrected evidence; a missingness-only change cannot be described as recovery.
+
+Auditability does not authorize indefinite retention of deleted health data. Before implementation, decide the minimum metadata needed, retention periods, deletion rights, backup expiry, export behavior, reimport suppression, and removal of revealing derived summaries. Do not retain raw deleted values, reconstructable hashes, or a permanent shadow medical history just to resist manipulation. Where lawful retention is unavailable, mark prior derivations unavailable instead of pretending they remain fully reproducible.
+
+#### Review gates and failure behavior
+
+H7 cannot release this feature until privacy and applicable deletion rights, consent withdrawal, coercion and safe exit, false alarms, minimum necessary disclosure, and delivery failure handling have been reviewed. This is a review requirement, not a determination of which law applies. Qualified clinical review is separate for urgent-health workflows. Sleep loss and elevated heart rate have many possible causes and may warrant medical attention; an urgent workflow must not wait for, or rely solely on, the composite Headspace score. Existing research limits remain in [02_SCORING_AND_VALIDATION.md](02_SCORING_AND_VALIDATION.md#urgent-concerns) and [R11](07_SOURCES.md#r11).
+
+Keep previewed, canceled, committed, queued, provider-accepted, delivered, failed, and acknowledged states distinct. A failed notification does not undo a disconnection or deletion. Retries must be bounded, idempotent, and consent checked; failure must not silently widen recipients, switch channels, or start emergency escalation. Show the owner accurate delivery status without promising that a partner saw or acted on it.
+
+#### Acceptance cases for later implementation
+
+| Synthetic case | Required outcome |
+| --- | --- |
+| Selected source disconnection with two differently scoped partners | Each named recipient and exact allowed disclosure appears before action; no hidden recipient |
+| No authorized recipient or recipient has not opted in | No partner notification; preview says so |
+| Cancel in preview | No disconnection/deletion or notification caused by that canceled action |
+| Owner withdraws access before commit or while a message is queued | Access closes and pending disclosure is canceled; safe exit does not notify the removed partner |
+| Permission or recipient changes after preview | Re-preview before sending; no stale authorization or widened content |
+| Ordinary food deletion, duplicate cleanup, or correction | Routine edit handling; no automatic integrity alert or suspicion label |
+| Important input removed from a trend window | Derived result superseded or invalidated; coverage loss visible; no claimed improvement from disappearance |
+| Same important record remains through an authorized duplicate or fallback | Deduplication and comparable coverage applied; do not falsely claim all evidence was lost |
+| Battery failure, outage, non-wear, disability, or unknown reason | Appropriate availability/context state; no inferred intent or use |
+| Delete and later reimport | Approved suppression/retention policy respected without keeping prohibited deleted content |
+| Legitimate corrected measurement changes the state | Corrected evidence and revision explain the change, without a deletion penalty |
+| Provider failure, duplicate retry, or delayed acknowledgment | One logical notification, bounded retry, distinct status, and no unapproved escalation |
+| Sharing revoked during retry | Pending send canceled; no detail leakage through logs, exports, assistants, or partner views |
+| Normal Headspace with a separately reported urgent concern | Qualified urgent workflow remains independent; no reliance on the composite |
+
 ## Handoff boundaries
 
 Read the latest `AGENTS.md`, `docs/ROADMAP.md`, `docs/CURSOR_HANDOFF.md`, `docs/VERIFICATION.md`, and original build prompt before implementing. Preserve existing identities and coordination threads. Review the owner's private governing framework through an authorized private path when a rule depends on it; never copy it into Git.
 
-This package does not authorize changing live integrations, importing real records, deploying a score, buying software, installing dependencies, sending notifications, merging the unrelated maintenance PR, or modifying ongoing fixes. The current user request is satisfied by researching and saving this plan. Future implementation should begin with the bounded H1 deliverable and its acceptance cases.
+This package does not authorize changing live integrations, importing real records, deploying a score, buying software, installing dependencies, sending notifications, merging the unrelated maintenance PR, or modifying ongoing fixes. The current user request is satisfied by researching and saving this plan. Future implementation follows H0 through H7, resolving applicable H0 dependencies before the bounded H1 deliverable and its acceptance cases.
