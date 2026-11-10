@@ -37,6 +37,17 @@ Push dates below are observed repository activity, not proof of a stable release
 
 Research code can help reproduce feature engineering and evaluation. It cannot supply missing clinical validation or device compatibility. No ready-made package was accepted here as a general predictor for alcohol, other drugs, gambling, and compulsive behavior.
 
+## Existing validators and bounded evaluation candidates
+
+Dependency check, November 10, 2026: the actual working checkout's `requirements.lock` already includes `pydantic==2.14.3` through `mcp` and `mcp-types`, and `jsonschema==4.26.0` through `mcp`. Neither is a direct entry in `requirements.in`. Reuse existing validation patterns rather than proposing a new installation. If application code later relies on either directly, review whether it should become an explicitly declared direct dependency through the normal lock workflow. This manifest read is not proof of an installed runtime version or a new compatibility test. [O16](07_SOURCES.md#o16).
+
+| Candidate | Verified scope | Decision |
+| --- | --- | --- |
+| Hypothesis [O14](07_SOURCES.md#o14) | Python property testing; repository license is MPL-2.0, with noted exceptions for included third-party code | Optional synthetic test dependency for missingness, duplicate/retry, correction, and coverage invariants. Not in the inspected manifests; not installed by this task. It tests software properties, not clinical validity or scoring efficacy |
+| SurveyJS Form Library [O15](07_SOURCES.md#o15) | MIT form-rendering library | Consider only if existing Django forms cannot meet a demonstrated questionnaire UI need. Survey Creator, Dashboard, and PDF Generator are separate proprietary products requiring paid developer licenses; Form Library's MIT license does not cover them or the questionnaire content |
+
+No new scoring engine is selected. Formal instruments retain their wording, recall period, response options, and scoring. UI/schema validation and property tests cannot establish that new Headspace weights or adapted instruments are valid; the existing evaluation gates remain.
+
 ## Selection and adoption gate
 
 For each proposed addition, record the exact version or commit, license text and notices, supported Python or iOS version, transitive dependencies, model or dataset terms, vulnerability review, test coverage relevant to the feature, and removal path. Check compatibility with this project's existing Python 3.13 environment and locked dependencies in an isolated environment.

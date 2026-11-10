@@ -38,7 +38,7 @@ Studies delayed prediction windows using repeated EMA from an early alcohol reco
 
 **PACS.** [Flannery, Volpicelli, and Pettinati, 1999](https://pubmed.ncbi.nlm.nih.gov/10470970/).
 
-Original study of the five-item Penn Alcohol Craving Scale, concerning the previous week, in 147 participants from a treatment trial. Supports a focused craving measure, not conversion into a universal daily score. Exact redistribution terms for an embedded commercial questionnaire remain to be confirmed.
+Original study of the five-item Penn Alcohol Craving Scale, concerning the previous week, in 147 participants from a treatment trial. Supports a focused craving measure, not conversion into a universal daily score. Access/use supplement checked November 10, 2026: [PhenX protocol 511702](https://www.phenxtoolkit.org/protocols/view/511702) is publicly accessible and states: "This protocol is freely available; permission not required for use." This is an explicit protocol-use statement, not merely free website access. The protocol scores five responses from 0 to 6 and sums them to 0 through 30. Preserve its weekly recall and original form. PhenX notes suggested adaptations are not validated. Its permission does not establish terms for third-party delivery software, separately sourced translations, or modified versions; identify the exact implementation before embedding. Do not promote its categories into Headspace or personal relapse predictions.
 
 ### R07
 
@@ -86,13 +86,23 @@ Five wellbeing items with a two-week recall period. The reviewed WHO PDF states 
 
 **PHQ and GAD screeners.** [Publisher portal](https://www.phqscreeners.com/) and [University of Washington AIMS Center PHQ-9 resource](https://aims.uw.edu/resource/phq-9-depression-scale/).
 
-The AIMS resource states that PHQ-9 reproduction, translation, display, and distribution do not require permission. The portal's current extracted page did not expose every instrument's terms. Confirm GAD-7 and translation details before embedding. These are symptom measures, not a daily capacity or relapse probability.
+The AIMS resource states that PHQ-9 reproduction, translation, display, and distribution do not require permission. [Pfizer's official July 21, 2010 announcement](https://www.pfizer.com/news/press-release/press-release-detail/pfizer_to_offer_free_public_access_to_mental_health_assessment_tools_to_improve_diagnosis_and_patient_care), accessible November 10, 2026, explicitly covers PHQ and GAD-7 access/download "without copyright restriction and at no charge". This resolves the earlier uncertainty about the publisher's GAD permission statement. Preserve the selected instrument's wording, response options, recall window, scoring, and translation/version provenance. Permission to use does not validate altered questions, inferred answers, or a new composite. These remain separate symptom questionnaires, not a daily capacity or relapse probability.
 
 ### R15
 
 **PROMIS.** [HealthMeasures obtain and administer guidance](https://www.healthmeasures.net/explore-measurement-systems/promis/obtain-administer-measures).
 
-Electronic administration can require HealthMeasures Electronic Administration Permission and review, with specific exemptions. Free paper access does not by itself settle product integration rights.
+[Current HealthMeasures fees](https://healthmeasures.net/services/fees/), page updated October 1, 2026 and checked November 10, distinguish these uses:
+
+| Item | Listed terms relevant to this plan |
+| --- | --- |
+| English static paper measure | Free |
+| Standard English static digital measure | Noncommercial research may be free; noncommercial nonresearch $600 per measure/three years; commercial $750 per measure/study or three years. Review conditions apply |
+| Existing translations | $1,100 per measure per language for study duration or three years; permission to translate is quoted separately |
+| Assessment Center API | Separate annual platform license; institution and distributor rates differ |
+| Scoring service and manuals | Free; this does not make delivery or commercial licensing free |
+
+Custom forms and multi-measure profiles have different costs. Confirm commercial status, platform, language, term, and review requirements; a free user tier does not establish noncommercial eligibility. No implementation license was obtained.
 
 ### R16
 
@@ -241,6 +251,24 @@ License and push-date observations are summarized in [05_OPEN_SOURCE.md](05_OPEN
 ### O13
 
 [NLML](https://github.com/nicolasleenaerts/NLML). EMA modeling scripts in R. GitHub metadata did not establish a license. No code copied, installed, or cleared for reuse.
+
+### O14
+
+[Hypothesis documentation](https://hypothesis.readthedocs.io/en/latest/) and [repository license](https://github.com/HypothesisWorks/hypothesis/blob/master/LICENSE.txt), checked November 10, 2026. Python property testing; MPL-2.0 with explicitly noted third-party exceptions. Candidate for synthetic software invariants only, not a clinical scoring engine. No installation or test execution performed.
+
+### O15
+
+[SurveyJS licensing](https://surveyjs.io/licensing) and [Form Library LICENSE](https://github.com/surveyjs/survey-library/blob/master/LICENSE), checked November 10, 2026. Form Library is MIT. Survey Creator, Dashboard, and PDF Generator require separate commercial developer licensing. The library license does not grant questionnaire rights. No addon purchase, package installation, UI integration, or clinical validation performed.
+
+### O16
+
+Existing project dependency evidence, read November 10, 2026 from the actual working checkout, not inferred from the research candidates:
+
+* `requirements.in` SHA-256: `5dbb8c2d4b9577a114292775dce8ee3631e2c183e4e3253c4ca3e9495052692c`.
+* `requirements.lock` SHA-256: `8022b4f0d622692acb98a3bdd65af6f8aa3778c9decb7f6f80f5b47a3bfdb1e2`.
+* Lock entries: `pydantic==2.14.3` via MCP/MCP types; `jsonschema==4.26.0` via MCP. They are existing transitive dependencies, not proposed new installations. Hypothesis and SurveyJS were not entries in these manifests.
+
+These hashes identify dirty working manifests; they do not claim those exact manifests are committed, deployed, or installed. No dependency files were edited. Future direct application imports should receive the normal explicit dependency and compatibility review.
 
 ## Repository evidence and review limits
 
