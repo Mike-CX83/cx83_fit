@@ -110,13 +110,33 @@ class SummaryRecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
+    connection = models.ForeignKey(
+        'OuraConnection', null=True, blank=True, on_delete=models.PROTECT, related_name='derived_summaries')
+    derivation = models.JSONField(null=True, blank=True)
 
     class Meta:
         ordering = ['-local_date', '-created_at', 'id']
         constraints = [
             models.UniqueConstraint(fields=['owner', 'kind', 'source_system', 'source_record_id'], name='unique_summary_source'),
-            models.UniqueConstraint(fields=['owner', 'kind', 'source_system', 'local_date'],
-                                    condition=models.Q(kind__in=['nutrition', 'recovery', 'activity']), name='unique_daily_summary_source'),
+            models.UniqueConstraint(
+                fields=['owner', 'kind', 'source_system', 'local_date'],
+                condition=models.Q(kind__in=['nutrition', 'recovery', 'activity']) & ~models.Q(entry_method='derived'),
+                name='unique_daily_summary_source'),
+            models.UniqueConstraint(
+                fields=['owner', 'connection', 'synthetic', 'kind', 'local_date'],
+                condition=models.Q(entry_method='derived'),
+                name='unique_derived_daily_identity'),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(entry_method='derived', source_system='oura', kind__in=['activity', 'recovery'],
+                             connection__isnull=False, derivation__isnull=False,
+                             derivation__status__in=['current', 'stale', 'conflict'],
+                             derivation__has_keys=['account_id', 'conflict_reason', 'contributor_identities_ever',
+                                                   'current_contributors', 'quality', 'recipe_version', 'schema_version',
+                                                   'status', 'timezone_status'])
+                    | (~models.Q(entry_method='derived') & models.Q(connection__isnull=True, derivation__isnull=True))
+                ),
+                name='summary_identity_shape'),
         ]
         indexes = [models.Index(fields=['owner', 'kind', 'local_date', 'synthetic'], name='summary_owner_kind_date')]
 

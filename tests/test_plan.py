@@ -55,9 +55,11 @@ class PlanTests(TestCase):
             source_timezone='America/Chicago', source_system='manual', source_record_id='food-1',
             completeness='partial', values={'calories': '2400', 'protein': '190', 'total_carbohydrates': None, 'fat': None, 'fiber': '30'})
         plan = fitness_plan(self.owner, self.today)
-        self.assertEqual(plan['analysis']['active_calories'][0]['source'], 'oura')
+        self.assertFalse(plan['projection']['writes'])
+        self.assertEqual(plan['projection']['status'], 'unavailable')
+        self.assertEqual(plan['analysis']['active_calories'], [])
         self.assertEqual(plan['analysis']['calories'][0]['source'], 'manual')
-        self.assertEqual(plan['analysis']['active_calories'][0]['average'], '700.0')
+        self.assertEqual(SummaryRecord.objects.filter(source_system='oura').count(), 0)
 
     def test_current_lab_remains_outside_the_window(self):
         ClinicalItem.objects.create(owner=self.owner, kind='lab', name='Synthetic panel', detail='recorded',

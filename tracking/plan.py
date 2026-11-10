@@ -92,12 +92,10 @@ def _clinical(owner, include_synthetic):
 
 
 def fitness_plan(owner, today=None, include_synthetic=False):
-    from tracking.device_log import project_stored_devices
-    project_stored_devices(owner, today)
     start, end = plan_window(today)
     summaries = _owned(owner, SummaryRecord, include_synthetic).filter(
         deleted_at__isnull=True, local_date__gte=start, local_date__lte=end,
-        kind__in=DAILY_FIELDS)
+        kind__in=DAILY_FIELDS).exclude(entry_method='derived')
     diary = _owned(owner, DietEntry, include_synthetic).filter(
         deleted_at__isnull=True, local_date__gte=start, local_date__lte=end)
     by_kind = {kind: [row for row in summaries if row.kind == kind] for kind in DAILY_FIELDS}
@@ -122,6 +120,11 @@ def fitness_plan(owner, today=None, include_synthetic=False):
                    'fiber_g': None if row.fiber_g is None else format(row.fiber_g, 'f')}
                   for row in diary],
         'clinical': _clinical(owner, include_synthetic),
+        'projection': {
+            'writes': False,
+            'status': 'unavailable',
+            'detail': 'This read does not refresh stored device sources.',
+        },
         'rules': [
             'The plan uses the latest 90 local days.',
             'Days without a record are unknown, not zero.',

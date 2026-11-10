@@ -66,6 +66,7 @@ class DeletedDeviceProjectionTests(TransactionTestCase):
         recovery_before = self.fingerprint(recovery)
         receipts = self.audits()
         self.activity('fabricated-activity-yesterday', self.today - timedelta(days=1), 2222)
+        project_stored_devices(self.owner, self.today)
         self.assertTrue(connection.get_autocommit())
         first = fitness_plan(self.owner, self.today)
         second = fitness_plan(self.owner, self.today)
@@ -99,6 +100,7 @@ class DeletedDeviceProjectionTests(TransactionTestCase):
         activity_before = self.fingerprint(activity)
         receipts = self.audits()
         self.sleep('fabricated-sleep-yesterday', self.today - timedelta(days=1), 10800)
+        project_stored_devices(self.owner, self.today)
         self.assertTrue(connection.get_autocommit())
         for _ in range(2):
             fitness_plan(self.owner, self.today)
@@ -157,7 +159,9 @@ class DeletedDeviceProjectionTests(TransactionTestCase):
         raw.raw_json = json.dumps(payload)
         raw.save(update_fields=['raw_json'])
         self.assertTrue(connection.get_autocommit())
+        project_stored_devices(self.owner, self.today)
         plan = fitness_plan(self.owner, self.today)
+        self.assertFalse(plan['projection']['writes'])
         row.refresh_from_db()
         self.assertEqual(row.version, 2)
         self.assertIsNone(row.deleted_at)
@@ -175,7 +179,7 @@ class DeletedDeviceProjectionTests(TransactionTestCase):
     def stale_update_keeps_the_tombstone(self, kind):
         self.activity('fabricated-race-activity', self.today, 1000)
         self.sleep('fabricated-race-sleep', self.today, 28800)
-        fitness_plan(self.owner, self.today)
+        project_stored_devices(self.owner, self.today)
         target = SummaryRecord.objects.get(owner=self.owner, kind=kind)
         collection = 'daily_activity' if kind == 'activity' else 'sleep'
         raw = OuraRecord.objects.get(connection=self.connection, collection=collection)
@@ -202,7 +206,9 @@ class DeletedDeviceProjectionTests(TransactionTestCase):
             return real_update(queryset, **kwargs)
 
         with patch.object(QuerySet, 'update', intercepted):
-            plan = fitness_plan(self.owner, self.today)
+            project_stored_devices(self.owner, self.today)
+        plan = fitness_plan(self.owner, self.today)
+        self.assertFalse(plan['projection']['writes'])
         after = serialize_summary(SummaryRecord.objects.get(pk=target.pk))
         field = 'steps' if kind == 'activity' else 'sleep_minutes'
         self.assertEqual(after, state['database'])
