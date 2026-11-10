@@ -7,6 +7,8 @@ import json
 from datetime import date
 from decimal import Decimal
 
+from django.utils import timezone
+
 from tracking.models import OuraRecord, SummaryRecord
 from tracking.plan import plan_window
 from tracking.summaries import validate_values
@@ -51,19 +53,21 @@ def _row(raw):
 def _save(owner, kind, day, source_id, values, device, synthetic):
     clean = validate_values(kind, values, device)
     existing = SummaryRecord.objects.filter(
-        owner=owner, kind=kind, source_system='oura', local_date=day, deleted_at__isnull=True,
+        owner=owner, kind=kind, source_system='oura', local_date=day,
     ).first()
+    if existing is not None and existing.deleted_at is not None:
+        return
     if existing and existing.entry_method != 'imported':
         return
     if existing:
         if existing.values == clean and existing.synthetic == synthetic:
             return
-        existing.values = clean
-        existing.device = device
-        existing.synthetic = synthetic
-        existing.completeness = 'partial'
-        existing.version += 1
-        existing.save()
+        SummaryRecord.objects.filter(
+            pk=existing.pk, version=existing.version, deleted_at__isnull=True,
+        ).update(
+            values=clean, device=device, synthetic=synthetic, completeness='partial',
+            version=existing.version + 1, updated_at=timezone.now(),
+        )
         return
     SummaryRecord.objects.create(
         owner=owner, kind=kind, local_date=day, source_timezone='America/Chicago',
