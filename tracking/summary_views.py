@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from .forms import SummaryForm, NutritionTargetForm, SummaryImportForm
 from .models import SummaryRecord, NutritionTargets
 from .summaries import SCHEMAS, display_values, put_summary, delete_summary
+from .summary_evidence import evidence_envelope, unresolved_history
 from .views import owner_only
 from .summary_imports import HEADER as SUMMARY_HEADER, preview_summaries, confirm_summaries
 from .uploads import SummaryCSVUploadLimit
@@ -74,9 +75,10 @@ def listing(request, kind):
                      for key, label, unit in SCHEMAS['nutrition']] if kind == 'nutrition' else []
     return render(request, 'tracking/summaries.html', {
         'kind': kind, 'title': 'Lab results' if kind == 'health' else dict(SummaryRecord.KINDS)[kind], 'page': page,
-        'entries': [{'record': record, 'fields': display_values(record)} for record in page],
+        'entries': [{'record': record, 'fields': display_values(record), 'evidence': evidence_envelope(record)} for record in page],
         'synthetic': request.GET.get('synthetic') == '1', 'weekly': weekly,
         'week_start': start, 'week_end': today, 'target_values': target_values,
+        'unresolved_history_count': unresolved_history(request.user).count(),
     })
 
 
@@ -115,7 +117,40 @@ def detail(request, kind, record_id):
     except InvalidPage:
         raise Http404
     return render(request, 'tracking/summary_detail.html', {'record': record, 'fields': display_values(record),
-        'history': history, 'kind': kind, 'title': dict(SummaryRecord.KINDS)[kind], 'delete_request_id': uuid.uuid4()})
+        'history': history, 'kind': kind, 'title': dict(SummaryRecord.KINDS)[kind], 'delete_request_id': uuid.uuid4(),
+        'evidence': evidence_envelope(record), 'unresolved_history_count': unresolved_history(request.user).count()})
+
+
+@owner_only
+@require_http_methods(['GET'])
+def provenance(request):
+    """Owner inventory of unresolved and derived history, including both stored flags and tombstones."""
+    try:
+        page = Paginator(unresolved_history(request.user), 30).page(request.GET.get('page', '1'))
+    except InvalidPage:
+        raise Http404
+    return render(request, 'tracking/summary_provenance.html', {
+        'page': page,
+        'entries': [{'record': record, 'fields': display_values(record), 'evidence': evidence_envelope(record)} for record in page],
+        'unresolved_history_count': unresolved_history(request.user).count(),
+    })
+
+
+@owner_only
+@require_http_methods(['GET'])
+def provenance_detail(request, record_id):
+    """Read-only inspection of one retained unresolved or derived original, including tombstones."""
+    record = unresolved_history(request.user).filter(pk=record_id).first()
+    if record is None:
+        raise Http404
+    try:
+        history = Paginator(record.corrections.order_by('-created_at', '-id'), 20).page(request.GET.get('page', '1'))
+    except InvalidPage:
+        raise Http404
+    return render(request, 'tracking/summary_provenance_detail.html', {
+        'record': record, 'fields': display_values(record), 'history': history,
+        'evidence': evidence_envelope(record),
+    })
 
 
 @owner_only

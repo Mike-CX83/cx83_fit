@@ -1,6 +1,7 @@
 """Explicit stored-source identity for new Oura summaries.
 
-Reads do not call this module. Legacy imported rows are review candidates,
+Refresh is not a read side effect. The legacy predicate lives in the read-only
+evidence contract and is reused here. Legacy imported rows are review candidates,
 not repaired or reclassified. Derived rows stay out of Plan calculations.
 """
 import hashlib
@@ -15,6 +16,7 @@ from django.utils import timezone
 from tracking.models import OuraConnection, OuraRecord, SummaryCorrection, SummaryRecord, WriteRequest
 from tracking.plan import plan_window
 from tracking.summaries import serialize_summary
+from tracking.summary_evidence import legacy_candidate as legacy_candidate_predicate
 
 RECIPE_VERSION = 1
 SCHEMA_VERSION = 2
@@ -31,13 +33,7 @@ EVER_CONTRIBUTOR = ('raw_id', 'identity_key', 'collection', 'source_record_id')
 
 def legacy_candidate(record):
     """Imported exact-oura activity or recovery with no derived identity."""
-    return (
-        record.source_system == 'oura'
-        and record.kind in ('activity', 'recovery')
-        and record.entry_method == 'imported'
-        and record.connection_id is None
-        and record.derivation is None
-    )
+    return legacy_candidate_predicate(record)
 
 
 def _attached_connection(record):

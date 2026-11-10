@@ -1,0 +1,17 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<h1 class="page-title">Unresolved history</h1>
+<p class="quiet">Account/test attribution unverified. This read-only inventory includes both stored flags and deleted rows. It does not prove personal or test attribution, and it has no restore or correction controls.</p>
+<p>{{ unresolved_history_count }} records.</p>
+<section class="panel">
+{% for entry in entries %}<article><h2>{{ entry.record.local_date|date:'M j, Y' }} · {{ entry.record.kind }}</h2>
+<p>{{ entry.record.source_system }} · {{ entry.record.entry_method }} · stored synthetic {% if entry.record.synthetic %}true{% else %}false{% endif %}</p>
+{% if entry.record.deleted_at %}<p>Deleted {{ entry.record.deleted_at|date:'Y-m-d H:i T' }}. Read only.</p>{% endif %}
+{% if entry.evidence.eligibility_status == 'unresolved' %}<p>Account/test attribution unverified.</p>{% endif %}
+{% if entry.evidence.entry_method == 'derived' %}<p>Projection unavailable. Status: {{ entry.evidence.derived_status }}.</p>{% if entry.evidence.stored_class_verified %}<p>Connection {{ entry.evidence.connection_id }}. Class: {% if entry.evidence.derived_class %}test{% else %}personal{% endif %}.</p>{% endif %}{% endif %}
+<dl class="details">{% for field in entry.fields %}<dt>{{ field.label }}</dt><dd>{% if field.value != None %}{{ field.value }} {{ field.unit }}{% else %}Unknown{% endif %}</dd>{% endfor %}</dl>
+<p><a href="{% url 'summary_provenance_detail' entry.record.id %}">Inspect original</a></p>
+{% if not entry.record.deleted_at %}<p><a href="{% url 'summary_detail' entry.record.kind entry.record.id %}">View history</a></p>{% endif %}
+</article>{% empty %}<p>No unresolved history.</p>{% endfor %}
+<nav>{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">Previous</a>{% endif %}{% if page.has_next %}<a href="?page={{ page.next_page_number }}">Next</a>{% endif %}</nav>
+</section>
+{% endblock %}

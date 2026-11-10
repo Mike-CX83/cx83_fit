@@ -1,0 +1,25 @@
+{% extends 'tracking/base.html' %}{% block content %}
+<h1 class="page-title">Original history</h1>
+<p class="quiet">Read only. This page shows the retained original, including a deleted row. It has no restore, correction, or delete controls.</p>
+<nav class="page-actions"><a href="{% url 'summary_provenance' %}">Unresolved history</a></nav>
+<section class="panel"><h2>Original</h2><dl class="details">
+<dt>Summary ID</dt><dd>{{ record.id }}</dd>
+<dt>Source ID</dt><dd>{{ record.source_record_id }}</dd>
+<dt>Source</dt><dd>{{ record.source_system }}</dd>
+<dt>Method</dt><dd>{{ record.entry_method }}</dd>
+<dt>Device</dt><dd>{{ record.device|default:'Not supplied' }}</dd>
+<dt>Timezone</dt><dd>{{ record.source_timezone|default:'Not supplied' }}</dd>
+<dt>Stored synthetic flag</dt><dd>{% if record.synthetic %}true{% else %}false{% endif %}. This stored flag does not prove personal or test attribution.</dd>
+<dt>Version</dt><dd>{{ record.version }}</dd>
+<dt>Created</dt><dd>{{ record.created_at|date:'Y-m-d H:i T' }}</dd>
+<dt>Updated</dt><dd>{{ record.updated_at|date:'Y-m-d H:i T' }}</dd>
+{% if record.deleted_at %}<dt>Deleted</dt><dd>{{ record.deleted_at|date:'Y-m-d H:i T' }}</dd>{% endif %}
+<dt>Notes</dt><dd>{{ record.notes|default:'None'|linebreaksbr }}</dd>
+</dl>
+{% if evidence.eligibility_status == 'unresolved' %}<p>Account/test attribution unverified. The record is not marked corrupt.</p>{% endif %}
+{% if evidence.entry_method == 'derived' %}<p>Projection unavailable. Status: {{ evidence.derived_status }}.</p>{% if evidence.stored_class_verified %}<p>Connection {{ evidence.connection_id }}. Class: {% if evidence.derived_class %}test{% else %}personal{% endif %}.</p>{% else %}<p>Stored synthetic flag is not an account class.</p>{% endif %}{% endif %}
+</section>
+<section class="panel"><h2>Values</h2><dl class="details">{% for field in fields %}<dt>{{ field.label }}</dt><dd>{% if field.value != None %}{{ field.value }} {{ field.unit }}{% else %}Unknown{% endif %}</dd>{% endfor %}</dl></section>
+<section class="panel"><h2>Corrections</h2>{% for change in history %}<details><summary>Revision {{ change.after.version }} · {{ change.created_at|date:'Y-m-d H:i T' }}</summary>{% if change.before %}<h3>Previous</h3><dl class="details">{% for key,value in change.before.values.items %}<dt>{{ key }}</dt><dd>{{ value|default_if_none:'Unknown' }}</dd>{% endfor %}</dl>{% endif %}<h3>Saved</h3><dl class="details">{% for key,value in change.after.values.items %}<dt>{{ key }}</dt><dd>{{ value|default_if_none:'Unknown' }}</dd>{% endfor %}</dl></details>{% empty %}<p>No corrections.</p>{% endfor %}
+<nav>{% if history.has_previous %}<a href="?page={{ history.previous_page_number }}">Newer</a>{% endif %}{% if history.has_next %}<a href="?page={{ history.next_page_number }}">Older</a>{% endif %}</nav></section>
+{% endblock %}
