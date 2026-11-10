@@ -18,7 +18,9 @@ SCHEMAS = {
                   ('total_carbohydrates', 'Total carbohydrates', 'g'), ('fat', 'Fat', 'g'), ('fiber', 'Fiber', 'g')],
     'recovery': [('sleep_minutes', 'Sleep duration', 'min'), ('hrv_ms', 'HRV', 'ms'),
                  ('resting_hr_bpm', 'Resting heart rate', 'bpm'), ('readiness', 'Source readiness score', '/100')],
-    'activity': [('steps', 'Steps', 'steps'), ('workout_minutes', 'Workout duration', 'min')],
+    'activity': [('steps', 'Steps', 'steps'), ('workout_minutes', 'Workout duration', 'min'),
+                 ('active_calories', 'Active calories burned', 'kcal'),
+                 ('total_calories', 'Total calories burned', 'kcal')],
     'health': [('value', 'Result', '')],
 }
 TEXT_FIELDS = {'nutrition': {}, 'recovery': {'hrv_method': 40},
