@@ -1,5 +1,9 @@
 # Private Health Dashboard
 
+## Headspace planning
+
+The November 10, 2026 [Headspace plan](Headspace/README.md) covers journal scoring, source priorities, research, open source reuse, and staged delivery. The future Holding Space partner dashboard follows completion of Headspace. This is planning documentation, not a change to the running calculation.
+
 Local first release implementation checkpoint, November 6, 2026. **Measurements, private photos, summaries, targets, charts, reviews, imports, exports and encrypted restore are implemented and tested locally. Actual ChatGPT access, physical iPhone checks and deployment remain incomplete.** No personal records, credentials, wearable files or photos are included.
 
 The complete governing specification was read from `/Personal_Health_Fitness_Dashboard_Build_Prompt.txt` in ChatGPT on November 5, 2026, all 412 lines, 20,565 bytes. `rule_set.docx` was also read. The specification remains the finish line; this checkpoint does not replace it.
