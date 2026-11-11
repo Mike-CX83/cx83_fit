@@ -76,10 +76,6 @@ class HeadroomTests(TestCase):
         self.rate('energy', 8)
         SummaryRecord.objects.create(
             owner=self.owner, kind='recovery', local_date=self.today, source_timezone='America/Chicago',
-            source_system='manual', source_record_id='sleep-long', completeness='partial',
-            values={'sleep_minutes': '480'}, synthetic=True)
-        SummaryRecord.objects.create(
-            owner=self.owner, kind='recovery', local_date=self.today, source_timezone='America/Chicago',
             source_system='oura', source_record_id='sleep-short', completeness='partial',
             values={'sleep_minutes': '300'}, synthetic=True)
         card = headroom(self.owner, self.today, include_synthetic=True)
@@ -90,6 +86,23 @@ class HeadroomTests(TestCase):
         self.assertIn('oura is 5 hours', card['summary'])
         self.assertNotIn('6.5', card['summary'])
         self.assertNotIn('manual is 8', card['summary'])
+
+    def test_short_and_long_sleep_stay_unselected(self):
+        self.rate('mood', 8)
+        self.rate('energy', 8)
+        SummaryRecord.objects.create(
+            owner=self.owner, kind='recovery', local_date=self.today, source_timezone='America/Chicago',
+            source_system='manual', source_record_id='sleep-long', completeness='partial',
+            values={'sleep_minutes': '480'}, synthetic=True)
+        SummaryRecord.objects.create(
+            owner=self.owner, kind='recovery', local_date=self.today, source_timezone='America/Chicago',
+            source_system='oura', source_record_id='sleep-short', completeness='partial',
+            values={'sleep_minutes': '300'}, synthetic=True)
+        card = headroom(self.owner, self.today, include_synthetic=True)
+        self.assertEqual(card['score'], '80.00')
+        self.assertNotIn('short sleep', card['summary'].lower())
+        self.assertIn('More than one record. This number stays unknown.', card['limitations'])
+        self.assertNotIn('oura is 5 hours', card['summary'].lower())
 
     def test_low_score_names_a_missing_meal_and_a_real_change(self):
         yesterday = self.today - timedelta(days=1)

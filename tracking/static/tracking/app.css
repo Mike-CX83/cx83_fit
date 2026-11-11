@@ -51,7 +51,8 @@ a:hover{color:var(--silver)}
 .plus svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 .plus:hover{background:var(--accent-hover);color:#fff}
 
-.headroom{padding:22px 20px 18px;border:0;border-radius:20px;background:linear-gradient(118deg,#152044 0%,#24306A 46%,#4A3D92 100%);color:#fff;margin:0 0 14px;box-shadow:0 16px 34px rgb(16 18 48 / 36%)}
+.headroom{min-width:0;max-width:100%;padding:22px 20px 18px;border:0;border-radius:20px;background:linear-gradient(118deg,#152044 0%,#24306A 46%,#4A3D92 100%);color:#fff;margin:0 0 14px;box-shadow:0 16px 34px rgb(16 18 48 / 36%)}
+.headroom .headroom-copy{min-width:0;max-width:100%;overflow-wrap:anywhere}
 .headroom p{color:#fff}
 .headroom .hero-label{color:#fff;font-size:.84rem;font-weight:800;letter-spacing:.18em}
 .headroom .hero-value{color:#fff;font-size:clamp(2.8rem,9vw,3.8rem)}

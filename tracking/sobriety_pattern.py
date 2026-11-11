@@ -14,9 +14,12 @@ from django.db import transaction
 from .domain import InvalidMeasurement, parse_day
 from .models import (JournalObservation, JournalScore, Measurement, OuraConnection, OuraRecord,
                      SobrietyDay, SummaryRecord)
+from .summaries import SCHEMAS
+from .summary_evidence import evidence_envelope, resolve_metric
 
 
 FORMULA = SobrietyDay.FORMULA
+EVIDENCE_GATE = 'h0-b2'
 OFF_WRIST_SECONDS = 8 * 60 * 60
 CRAVING_HIGH = 6
 CONFIDENCE_LOW = 4
@@ -78,7 +81,8 @@ def _build(owner, dates, include_synthetic):
             owner=owner, deleted_at__isnull=True, local_date__gte=dates[0], local_date__lte=dates[-1]),
         include_synthetic))
     summaries = list(_synthetic_filter(
-        SummaryRecord.objects.filter(owner=owner, deleted_at__isnull=True, local_date__gte=dates[0], local_date__lte=dates[-1]),
+        SummaryRecord.objects.select_related('connection').filter(
+            owner=owner, deleted_at__isnull=True, local_date__gte=dates[0], local_date__lte=dates[-1]),
         include_synthetic))
     measurements = list(_synthetic_filter(
         Measurement.objects.filter(owner=owner, deleted_at__isnull=True, local_date__gte=dates[0], local_date__lte=dates[-1]),
@@ -87,13 +91,18 @@ def _build(owner, dates, include_synthetic):
         JournalScore.objects.filter(owner=owner, local_date__gte=dates[0], local_date__lte=dates[-1]),
         include_synthetic))
     oura = _oura_days(owner, include_synthetic)
-    watches = _watch_days(summaries)
     by_date = {day: [] for day in dates}
     for observation in observations:
         by_date.setdefault(observation.local_date, []).append(observation)
     summary_by_date = {day: [] for day in dates}
+    excluded_by_date = {day: [] for day in dates}
     for record in summaries:
-        summary_by_date.setdefault(record.local_date, []).append(record)
+        envelope = evidence_envelope(record)
+        if envelope['eligibility_status'] == 'eligible':
+            summary_by_date.setdefault(record.local_date, []).append(record)
+        else:
+            excluded_by_date.setdefault(record.local_date, []).append(envelope)
+    watches = _watch_days([record for rows in summary_by_date.values() for record in rows])
     measure_by_date = {day: [] for day in dates}
     for record in measurements:
         measure_by_date.setdefault(record.local_date, []).append(record)
@@ -119,20 +128,37 @@ def _build(owner, dates, include_synthetic):
             if len(prior) >= 2 and today <= _median(prior) - RATING_DROP:
                 flags.append(key)
             rating_history[key].append((today, day))
-        devices = _devices_for_day(day, oura, watches)
+        devices, device_limits = _devices_for_day(day, oura, watches)
         if any(item['status'] == 'off_wrist' for item in devices):
             flags.append('off_wrist')
+        day_rows = summary_by_date.get(day, [])
+        recovery, recovery_alternatives = _qualified(day_rows, 'recovery')
+        activity, activity_alternatives = _qualified(day_rows, 'activity')
+        nutrition, nutrition_alternatives = _qualified(day_rows, 'nutrition')
+        limits = list(device_limits)
+        if excluded_by_date.get(day):
+            limits.append('excluded_summary_not_used')
+        if recovery_alternatives.get('sleep_minutes'):
+            limits.append('sleep_selection_required')
+        if activity_alternatives.get('steps'):
+            limits.append('steps_selection_required')
+        alternatives = {'sleep_minutes': [], 'steps': []}
+        alternatives.update(recovery_alternatives)
+        alternatives.update(activity_alternatives)
+        alternatives.update(nutrition_alternatives)
         coverage = {
+            'evidence_gate_version': EVIDENCE_GATE,
             'ratings': {key: value for key, value in ratings.items()},
             'earlier_ratings': earlier_ratings,
             'sobriety': _sobriety(day_observations),
             'devices': devices,
-            'recovery': _summaries(summary_by_date.get(day, []), 'recovery'),
-            'activity': _summaries(summary_by_date.get(day, []), 'activity'),
-            'nutrition': _summaries(summary_by_date.get(day, []), 'nutrition'),
+            'recovery': recovery,
+            'activity': activity,
+            'nutrition': nutrition,
             'measurements': [_measurement(record) for record in measure_by_date.get(day, [])],
             'scores': [_score(score) for score in score_by_date.get(day, [])],
-            'limits': [],
+            'limits': limits,
+            'alternatives': alternatives,
         }
         sobriety = coverage['sobriety']
         if sobriety['craving'] is not None and sobriety['craving'] >= CRAVING_HIGH:
@@ -143,11 +169,11 @@ def _build(owner, dates, include_synthetic):
             flags.append('confidence')
         if _sleep_short(coverage['recovery']):
             flags.append('sleep')
-        if _series_gap(day, dates, summary_by_date, 'recovery', 'sleep_minutes', devices):
+        if _series_gap(day, dates, summary_by_date, excluded_by_date, 'recovery', 'sleep_minutes', devices):
             flags.append('sleep')
-        if _series_gap(day, dates, summary_by_date, 'activity', 'steps', devices):
+        if _series_gap(day, dates, summary_by_date, excluded_by_date, 'activity', 'steps', devices):
             flags.append('activity')
-        if _nutrition_gap(day, dates, summary_by_date):
+        if _nutrition_gap(day, dates, summary_by_date, excluded_by_date):
             flags.append('nutrition')
         if _routine_missed(day_observations, coverage['scores']):
             flags.append('routine')
@@ -155,6 +181,7 @@ def _build(owner, dates, include_synthetic):
             coverage['limits'].append('craving_not_recorded')
         if not sobriety['domain_present']:
             coverage['limits'].append('sobriety_domain_not_recorded')
+        coverage['limits'] = list(dict.fromkeys(coverage['limits']))
         flags = list(dict.fromkeys(flags))
         rows.append({
             'local_date': day,
@@ -172,11 +199,11 @@ def _build(owner, dates, include_synthetic):
 def _oura_days(owner, include_synthetic):
     connections = list(_synthetic_filter(OuraConnection.objects.filter(owner=owner), include_synthetic))
     if not connections:
-        return {'connected': False, 'by_day': {}, 'all_days': set(), 'names': {}}
+        return {'connected': False, 'accounts': {}}
     records = OuraRecord.objects.filter(connection__in=connections, collection='daily_activity')
-    by_day = {}
-    names = {connection.id: 'Oura' if len(connections) == 1 else f'Oura {connection.account_key}'
-             for connection in connections}
+    accounts = {connection.id: {
+        'connection_id': str(connection.id), 'synthetic': connection.synthetic is True, 'by_day': {},
+    } for connection in connections}
     for record in records:
         payload = _json(record.raw_json)
         if payload is None:
@@ -185,47 +212,80 @@ def _oura_days(owner, include_synthetic):
             day = parse_day(payload.get('day'))
         except InvalidMeasurement:
             continue
-        by_day.setdefault(day, []).append({
-            'name': names[record.connection_id],
-            'non_wear_seconds': _seconds(payload.get('non_wear_time')),
-        })
-    return {'connected': True, 'by_day': by_day, 'all_days': set(by_day), 'names': names}
+        account = accounts[record.connection_id]
+        account['by_day'].setdefault(day, []).append(_seconds(payload.get('non_wear_time')))
+    for account in accounts.values():
+        account['days'] = {day for day, rows in account['by_day'].items() if len(rows) == 1}
+    return {'connected': True, 'accounts': accounts}
 
 
 def _watch_days(summaries):
     grouped = {}
+    contested = _contested_fields(summaries)
     for record in summaries:
         if record.source_system == 'oura' or record.kind not in ('activity', 'recovery'):
             continue
-        name = record.device or record.source_system
-        grouped.setdefault(name, set()).add(record.local_date)
+        numbers = _schema_numbers(record)
+        if not numbers:
+            continue
+        key = _record_key(record)
+        item = grouped.setdefault(key, {
+            'name': record.device or record.source_system, 'known_days': set(),
+            'unavailable_days': set(), 'identity': key,
+        })
+        blocked = contested.get((record.local_date, record.kind), set())
+        if any(field not in blocked for field in numbers):
+            item['known_days'].add(record.local_date)
+            item['unavailable_days'].discard(record.local_date)
+        elif record.local_date not in item['known_days']:
+            item['unavailable_days'].add(record.local_date)
+    by_name = {}
+    for item in grouped.values():
+        by_name.setdefault(item['name'], []).append(item)
+    for items in by_name.values():
+        if len(items) > 1:
+            for item in items:
+                item['name'] = f"{item['name']} · {'test' if item['identity'][3] else 'personal'}"
     return grouped
 
 
 def _devices_for_day(day, oura, watches):
     devices = []
+    limits = []
     if not oura['connected']:
         devices.append({'name': 'Oura', 'status': 'not_connected', 'non_wear_seconds': None})
     else:
-        rows = oura['by_day'].get(day)
-        if rows:
-            for row in rows:
-                seconds = row['non_wear_seconds']
+        several = len(oura['accounts']) > 1
+        for account in oura['accounts'].values():
+            name = f"Oura {account['connection_id']}" if several else 'Oura'
+            rows = account['by_day'].get(day)
+            if not rows:
+                devices.append({'name': name, 'status': _gap_status(day, account['days']), 'non_wear_seconds': None,
+                                'connection_id': account['connection_id'], 'synthetic': account['synthetic']})
+            elif len(rows) != 1:
+                devices.append({'name': name, 'status': 'wear_unknown', 'non_wear_seconds': None,
+                                'connection_id': account['connection_id'], 'synthetic': account['synthetic']})
+                limits.append('raw_oura_day_unresolved')
+            else:
+                seconds = rows[0]
                 if seconds is None:
                     status = 'wear_unknown'
                 elif seconds >= OFF_WRIST_SECONDS:
                     status = 'off_wrist'
                 else:
                     status = 'worn'
-                devices.append({'name': row['name'], 'status': status, 'non_wear_seconds': seconds})
+                devices.append({'name': name, 'status': status, 'non_wear_seconds': seconds,
+                                'connection_id': account['connection_id'], 'synthetic': account['synthetic']})
+    for item in watches.values():
+        if day in item['known_days']:
+            status = 'worn'
+        elif day in item['unavailable_days']:
+            status = 'wear_unknown'
+            limits.append('wear_unavailable')
         else:
-            devices.append({'name': 'Oura', 'status': _gap_status(day, oura['all_days']), 'non_wear_seconds': None})
-    for name, present in watches.items():
-        if day in present:
-            devices.append({'name': name, 'status': 'worn', 'non_wear_seconds': None})
-        else:
-            devices.append({'name': name, 'status': _gap_status(day, present), 'non_wear_seconds': None})
-    return devices
+            status = _gap_status(day, item['known_days'])
+        devices.append({'name': item['name'], 'status': status, 'non_wear_seconds': None, 'identity': list(item['identity'])})
+    return devices, limits
 
 
 def _gap_status(day, present):
@@ -328,44 +388,169 @@ def _sleep_short(recovery_rows):
     return False
 
 
-def _source_silenced(day, devices, source, device):
-    if source == 'oura':
-        return any(item['name'].startswith('Oura') and item['status'] in ('off_wrist', 'source_stale', 'not_connected') for item in devices)
-    return any(item['name'] == (device or source) and item['status'] in ('off_wrist', 'source_stale', 'not_connected') for item in devices)
+def _record_key(record):
+    return (record.source_system, record.device or '', record.entry_method, record.synthetic is True)
 
 
-def _series_gap(day, dates, summary_by_date, kind, field, devices):
-    earlier = {}
+def _number_known(value):
+    if value is None or isinstance(value, bool) or value == '':
+        return False
+    try:
+        number = Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return False
+    return number.is_finite()
+
+
+def _schema_numbers(record):
+    values = record.values if isinstance(record.values, dict) else {}
+    return [field for field, _, _ in SCHEMAS.get(record.kind, ()) if _number_known(values.get(field))]
+
+
+def _schema_unit(kind, field):
+    for name, _, unit in SCHEMAS.get(kind, ()):
+        if name == field:
+            return unit
+    return None
+
+
+def _contested_fields(summaries):
+    grouped = {}
+    for record in summaries:
+        if record.kind in ('activity', 'recovery'):
+            grouped.setdefault((record.local_date, record.kind), []).append(record)
+    contested = {}
+    for key, rows in grouped.items():
+        blocked = set()
+        for field, _, _ in SCHEMAS[key[1]]:
+            if resolve_metric(rows, field)['status'] == 'selection_required':
+                blocked.add(field)
+        contested[key] = blocked
+    return contested
+
+
+def _alternative_view(record, field):
+    method = (record.values or {}).get('hrv_method') if field == 'hrv_ms' else None
+    if method == '':
+        method = None
+    return {
+        'summary_id': str(record.id),
+        'value': (record.values or {}).get(field),
+        'source_system': record.source_system,
+        'device': record.device,
+        'stored_synthetic': record.synthetic is True,
+        'stored_class': 'test' if record.synthetic else 'personal',
+        'entry_method': record.entry_method,
+        'kind': record.kind,
+        'metric': field,
+        'unit': _schema_unit(record.kind, field),
+        'hrv_method': method,
+    }
+
+
+def _coverage_row(record, values, metrics):
+    method = (record.values or {}).get('hrv_method') if isinstance(record.values, dict) else None
+    if method == '':
+        method = None
+    return {
+        'source_system': record.source_system,
+        'device': record.device,
+        'completeness': record.completeness,
+        'values': values,
+        'summary_id': str(record.id),
+        'entry_method': record.entry_method,
+        'synthetic': record.synthetic is True,
+        'identity': {
+            'summary_id': str(record.id),
+            'entry_method': record.entry_method,
+            'stored_class': 'test' if record.synthetic else 'personal',
+            'metrics': [{'name': name, 'unit': _schema_unit(record.kind, name)} for name in metrics],
+            'hrv_method': method if method and 'hrv_ms' in metrics else None,
+        },
+    }
+
+
+def _qualified(records, kind):
+    rows = [record for record in records if record.kind == kind]
+    fields = [field for field, _, _ in SCHEMAS.get(kind, ())]
+    contested = {}
+    for field in fields:
+        if any(_number_known((record.values or {}).get(field)) for record in rows):
+            if resolve_metric(rows, field)['status'] == 'selection_required':
+                contested[field] = [_alternative_view(record, field) for record in rows
+                                    if _number_known((record.values or {}).get(field))]
+    qualified = []
+    for record in rows:
+        values = dict(record.values or {})
+        for field in contested:
+            values.pop(field, None)
+        if 'hrv_ms' in contested:
+            values.pop('hrv_method', None)
+        if not any(_number_known(values.get(field)) for field in fields):
+            continue
+        metrics = [field for field in fields if _number_known(values.get(field))]
+        qualified.append(_coverage_row(record, values, metrics))
+    return qualified, contested
+
+
+def _kind_rows(summary_by_date, day, kind):
+    return [record for record in summary_by_date.get(day, []) if record.kind == kind]
+
+
+def _excluded_kind(excluded_by_date, day, kind):
+    return any(item.get('kind') == kind for item in excluded_by_date.get(day, []))
+
+
+def _source_silenced(devices, key):
+    return any(item.get('identity') == list(key) and item['status'] in ('off_wrist', 'source_stale', 'not_connected') for item in devices)
+
+
+def _series_gap(day, dates, summary_by_date, excluded_by_date, kind, field, devices):
+    today_rows = _kind_rows(summary_by_date, day, kind)
+    if not today_rows and _excluded_kind(excluded_by_date, day, kind):
+        return False
+    if today_rows and resolve_metric(today_rows, field)['status'] != 'value':
+        return False
+    anchors = {}
     for seen in dates:
         if seen >= day:
             break
-        for record in summary_by_date.get(seen, []):
-            if record.kind == kind and _decimal((record.values or {}).get(field)) is not None:
-                earlier[(record.source_system, record.device)] = True
-    if not earlier:
-        return False
-    today = {(record.source_system, record.device) for record in summary_by_date.get(day, []) if record.kind == kind}
-    for key in earlier:
-        if key in today:
+        rows = _kind_rows(summary_by_date, seen, kind)
+        decision = resolve_metric(rows, field) if rows else None
+        if decision is None or decision['status'] != 'value':
             continue
-        if _source_silenced(day, devices, key[0], key[1]):
+        alternative = decision['alternatives'][0]
+        key = (alternative['source_system'], alternative['device'] or '', alternative['entry_method'], alternative['stored_synthetic'])
+        anchors[key] = True
+    today = {_record_key(record) for record in today_rows}
+    for key in anchors:
+        if key in today or _source_silenced(devices, key):
             continue
         return True
     return False
 
 
-def _nutrition_gap(day, dates, summary_by_date):
+def _nutrition_gap(day, dates, summary_by_date, excluded_by_date):
+    def usable(seen):
+        return [record for record in _kind_rows(summary_by_date, seen, 'nutrition') if record.source_system != 'oura']
+
+    today_rows = usable(day)
+    if not today_rows and _excluded_kind(excluded_by_date, day, 'nutrition'):
+        return False
+    if today_rows and resolve_metric(today_rows, 'calories')['status'] == 'selection_required':
+        return False
     earlier = {}
     for seen in dates:
         if seen >= day:
             break
-        for record in summary_by_date.get(seen, []):
-            if record.kind == 'nutrition' and record.source_system != 'oura':
-                earlier[(record.source_system, record.device)] = record.completeness
+        rows = usable(seen)
+        if rows and resolve_metric(rows, 'calories')['status'] == 'selection_required':
+            continue
+        for record in rows:
+            earlier[_record_key(record)] = record.completeness
     if not earlier:
         return False
-    today = {(record.source_system, record.device): record.completeness
-             for record in summary_by_date.get(day, []) if record.kind == 'nutrition'}
+    today = {_record_key(record): record.completeness for record in today_rows}
     for key, completeness in earlier.items():
         current = today.get(key)
         if current is None or (completeness == 'complete' and current != 'complete'):

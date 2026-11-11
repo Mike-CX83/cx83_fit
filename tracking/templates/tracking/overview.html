@@ -15,11 +15,12 @@
   <p class="action-line">{% if headroom.action.href %}<a class="banner-action" href="{{ headroom.action.href }}">{{ headroom.action.label }}</a>{% else %}<span class="banner-action">{{ headroom.action.label }}</span>{% endif %}</p>
   <details class="fold">
     <summary>Details</summary>
-    <p>{{ headroom.summary }}</p>
-    <p>{{ headroom.scale }}</p>
-    {% if headroom.alternatives %}<p>Also: {% for alt in headroom.alternatives %}{% if alt.href %}<a href="{{ alt.href }}">{{ alt.label }}</a>{% else %}{{ alt.label }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
-    {% if headroom.change %}<p>{{ headroom.change }}</p>{% endif %}
-    <p>Calculated {{ headroom.updated }}.{% if headroom.missing %} Not on file: {{ headroom.missing|join:", " }}.{% endif %} {{ headroom.uncollected }}</p>
+    <p class="headroom-copy">{{ headroom.summary }}</p>
+    <p class="headroom-copy">{{ headroom.scale }}</p>
+    {% if headroom.alternatives %}<p class="headroom-copy">Also: {% for alt in headroom.alternatives %}{% if alt.href %}<a href="{{ alt.href }}">{{ alt.label }}</a>{% else %}{{ alt.label }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+    {% if headroom.change %}<p class="headroom-copy">{{ headroom.change }}</p>{% endif %}
+    <p class="headroom-copy">Calculated {{ headroom.updated }}.{% if headroom.missing %} Not on file: {{ headroom.missing|join:", " }}.{% endif %} {{ headroom.uncollected }}</p>
+    {% if headroom.limitations %}<p class="quiet headroom-copy">{% for item in headroom.limitations %}{{ item }} {% endfor %}{% if headroom.history_href %}<a href="{{ headroom.history_href }}">Unresolved history</a>.{% endif %}</p>{% endif %}
   </details>
 </section>
 

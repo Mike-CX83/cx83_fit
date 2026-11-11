@@ -18,6 +18,7 @@ from .journal_continuity import score_day
 from .journal_registry import DAILY_STATE_FORMULA, STATE_METRICS
 from .models import DietEntry, JournalObservation, JournalScore, NutritionTargets, SummaryRecord
 from .sobriety_pattern import SLEEP_SHORT_MINUTES
+from .summary_evidence import CALCULATION_NOTICE, HISTORY_HREF, evidence_envelope, resolve_metric
 
 DISPLAY = 'headroom-display-1'
 CHANGE_POINTS = Decimal('5')
@@ -37,20 +38,16 @@ def headroom(owner, day, *, include_synthetic=False):
     drains = []
     missing = [name for name in STATE_METRICS if name not in ratings]
     sleep = _sleep(owner, day, include_synthetic)
-    if sleep['drain']:
-        drains.append(sleep['drain'])
-    elif sleep['missing']:
-        missing.append(sleep['missing'])
     food = _food(owner, day, include_synthetic, status, goals.get('calories'))
-    if food['drain']:
-        drains.append(food['drain'])
-    elif food['missing']:
-        missing.append(food['missing'])
     steps = _steps(owner, day, include_synthetic, goals.get('steps'))
-    if steps['drain']:
-        drains.append(steps['drain'])
-    elif steps['missing']:
-        missing.append(steps['missing'])
+    limitations = []
+    for item in (sleep, food, steps):
+        if item['drain']:
+            drains.append(item['drain'])
+        elif item['missing']:
+            missing.append(item['missing'])
+        if item['limitation'] and item['limitation'] not in limitations:
+            limitations.append(item['limitation'])
     for metric in STATE_METRICS:
         rating = ratings.get(metric)
         if rating is not None and rating <= LOW_RATING:
@@ -69,6 +66,8 @@ def headroom(owner, day, *, include_synthetic=False):
         'alternatives': alternatives,
         'factors': [item['text'] for item in drains],
         'missing': missing,
+        'limitations': limitations,
+        'history_href': HISTORY_HREF if any(item['history'] for item in (sleep, food, steps)) else '',
         'uncollected': 'Anger, loneliness, and stress are not collected.',
         'change': _change(owner, day, result, include_synthetic),
         'updated': date_format(timezone.localtime(row.computed_at), 'g:i A T'),
@@ -137,24 +136,48 @@ def _decimal(raw):
         return None
 
 
+def _records(owner, day, kind, include_synthetic):
+    return list(_scoped(SummaryRecord.objects.filter(
+        owner=owner, kind=kind, local_date=day, deleted_at__isnull=True,
+    ), include_synthetic).select_related('connection'))
+
+
+def _history(decision):
+    return any(item.get('eligibility_reason') != 'unknown' for item in decision.get('excluded') or [])
+
+
+def _input(decision, missing):
+    """One eligible value can explain the score. A conflict or exclusion does not become zero."""
+    history = _history(decision)
+    if decision['status'] == 'selection_required':
+        notes = ['More than one record. This number stays unknown.']
+        if history:
+            notes.append(CALCULATION_NOTICE)
+        return {'drain': None, 'missing': None, 'history': history, 'limitation': ' '.join(notes)}
+    if decision['status'] != 'value':
+        if history:
+            return {'drain': None, 'missing': None, 'history': True, 'limitation': CALCULATION_NOTICE}
+        return {'drain': None, 'missing': missing, 'history': False, 'limitation': None}
+    return None
+
+
+def _kept(result, decision):
+    if _history(decision):
+        result['history'] = True
+        result['limitation'] = CALCULATION_NOTICE
+    return result
+
+
 def _sleep(owner, day, include_synthetic):
-    rows = _scoped(SummaryRecord.objects.filter(
-        owner=owner, kind='recovery', local_date=day, deleted_at__isnull=True,
-    ), include_synthetic)
-    short = []
-    known = False
-    for row in rows:
-        minutes = _decimal((row.values or {}).get('sleep_minutes'))
-        if minutes is None:
-            continue
-        known = True
-        if minutes < SLEEP_SHORT_MINUTES:
-            short.append(f'{_source(row)} is {_hours(minutes)}')
-    if short:
-        return {'drain': {'key': 'sleep', 'text': f'short sleep from {_join(short)}'}, 'missing': None}
-    if not known:
-        return {'drain': None, 'missing': 'sleep'}
-    return {'drain': None, 'missing': None}
+    decision = resolve_metric(_records(owner, day, 'recovery', include_synthetic), 'sleep_minutes')
+    blocked = _input(decision, 'sleep')
+    if blocked:
+        return blocked
+    minutes = _decimal(decision['value'])
+    if minutes is not None and minutes < SLEEP_SHORT_MINUTES:
+        return _kept({'drain': {'key': 'sleep', 'text': f'short sleep from {_label(decision["alternatives"][0])} is {_hours(minutes)}'},
+                      'missing': None, 'history': False, 'limitation': None}, decision)
+    return _kept({'drain': None, 'missing': None, 'history': False, 'limitation': None}, decision)
 
 
 def _food(owner, day, include_synthetic, status, goal):
@@ -165,45 +188,52 @@ def _food(owner, day, include_synthetic, status, goal):
     for meal in meals:
         if meal.calories is not None:
             total = (total or Decimal('0')) + meal.calories
-    nutrition = _scoped(SummaryRecord.objects.filter(
-        owner=owner, kind='nutrition', local_date=day, deleted_at__isnull=True,
-    ), include_synthetic)
-    summary = nutrition.first()
-    summary_calories = _decimal((summary.values or {}).get('calories')) if summary else None
-    if total is None:
-        total = summary_calories
-    if total is None and not meals and summary is None:
+    records = _records(owner, day, 'nutrition', include_synthetic)
+    decision = resolve_metric(records, 'calories')
+    present = any(evidence_envelope(record)['eligibility_status'] == 'eligible' for record in records)
+    if total is None and decision['status'] == 'value':
+        total = _decimal(decision['value'])
+    if total is None and decision['status'] == 'selection_required':
+        return _input(decision, None)
+    if total is None and present:
+        return _kept({'drain': None, 'missing': 'food calories', 'history': False, 'limitation': None}, decision)
+    if total is None and _history(decision):
+        return _input(decision, None)
+    return _food_result(total, meals, status, goal, decision if decision['status'] == 'value' else None)
+
+
+def _food_result(total, meals, status, goal, decision):
+    result = {'drain': None, 'missing': None, 'history': False, 'limitation': None}
+    if total is None and not meals:
         if status in {'stretched', 'running_low'}:
-            return {'drain': {'key': 'food', 'text': 'no meal is logged'}, 'missing': None}
-        return {'drain': None, 'missing': 'food'}
-    if total is None:
-        return {'drain': None, 'missing': 'food calories'}
-    if goal is not None and goal > 0 and total < goal * HALF:
-        return {'drain': {'key': 'food', 'text': 'food is under half the calorie goal'}, 'missing': None}
-    return {'drain': None, 'missing': None}
+            result['drain'] = {'key': 'food', 'text': 'no meal is logged'}
+        else:
+            result['missing'] = 'food'
+    elif total is None:
+        result['missing'] = 'food calories'
+    elif goal is not None and goal > 0 and total < goal * HALF:
+        result['drain'] = {'key': 'food', 'text': 'food is under half the calorie goal'}
+    if decision is not None:
+        return _kept(result, decision)
+    return result
 
 
 def _steps(owner, day, include_synthetic, goal):
-    rows = list(_scoped(SummaryRecord.objects.filter(
-        owner=owner, kind='activity', local_date=day, deleted_at__isnull=True,
-    ), include_synthetic))
-    known = []
-    for row in rows:
-        steps = _decimal((row.values or {}).get('steps'))
-        if steps is not None:
-            known.append((row, steps))
-    if not known:
-        return {'drain': None, 'missing': 'steps'}
-    if goal is None or goal <= 0 or any(steps >= goal * HALF for _, steps in known):
-        return {'drain': None, 'missing': None}
-    names = _join(_source(row) for row, _steps in known)
-    return {'drain': {'key': 'steps', 'text': f'steps from {names} are under half the goal'}, 'missing': None}
+    decision = resolve_metric(_records(owner, day, 'activity', include_synthetic), 'steps')
+    blocked = _input(decision, 'steps')
+    if blocked:
+        return blocked
+    steps = _decimal(decision['value'])
+    if steps is None or goal is None or goal <= 0 or steps >= goal * HALF:
+        return _kept({'drain': None, 'missing': None, 'history': False, 'limitation': None}, decision)
+    return _kept({'drain': {'key': 'steps', 'text': f'steps from {_label(decision["alternatives"][0])} are under half the goal'},
+                  'missing': None, 'history': False, 'limitation': None}, decision)
 
 
-def _source(row):
-    if row.device:
-        return f'{row.source_system} · {row.device}'
-    return row.source_system
+def _label(alternative):
+    if alternative.get('device'):
+        return f"{alternative['source_system']} · {alternative['device']}"
+    return alternative['source_system']
 
 
 def _hours(minutes):
