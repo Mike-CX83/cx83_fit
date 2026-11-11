@@ -1,0 +1,120 @@
+--- a/docs/ROADMAP.md
++++ b/docs/ROADMAP.md
+@@ -122,7 +122,7 @@
+ 
+ | Category | Summary example | Entry example | Default |
+ | --- | --- | --- | --- |
+-| Headspace | The word, and whether it is from today | The number, the factor list | Off until the owner shares at least the word |
++| Headspace | The word, and whether it is current | Permitted factor explanations and coverage; internal score number stays hidden | Off until the owner shares at least the word |
+ | Fitness trends | A trend the owner names | Workouts, meals, measurements | Off |
+ | Photos | A shared still image | The photo library | Off. Share the metadata-free display image unless the owner deliberately includes the original |
+ | 3D scans | Not available. The feature is unscheduled | Same | Off, and empty |
+@@ -170,7 +170,7 @@
+ 
+ Keep the current Daily State formula as `daily-state-1` until a versioned replacement is accepted. Headspace displays that result. It does not store a second hidden score.
+ 
+-Proposed model, still without new numeric defaults:
++The newer [Headspace scoring and validation proposal](../Headspace/02_SCORING_AND_VALIDATION.md) owns candidate formulas and coverage gates. The earlier candidate table below remains research history, not a second formula specification or current default. Proposed model, still without new live numeric defaults:
+ 
+ * A versioned rule set with a common signal list and plan-specific metrics.
+ * Emotional, mental, and spiritual journal entries can sit beside physical measures the plan selected: sleep, activity, food logging, symptoms, and routine changes.
+@@ -206,6 +206,14 @@
+ * Suicidal language and potentially serious symptoms do not wait for a low Headspace number.
+ * The first version of this path is a person reporting a concern, plus a clear on-screen response. Automated detection that contacts someone is gated. See alerts below.
+ * The sobriety pattern can still be read on a check-in. It does not become the urgent path and it does not become the Headspace number.
++
++### Proposed data integrity and consent based Holding Space notifications
++
++Proposal only, recorded November 10, 2026. Mailbox message `msg-e86810f3` and the owner's follow-up are one request. The [existing Headspace build plan](../Headspace/06_BUILD_PLAN.md#proposal-data-integrity-and-consent-based-notifications) owns the detailed requirements and acceptance cases; do not create a second plan here.
++
++Before intentional disconnection of selected sources or deletion of selected important evidence, preview each named authorized partner and the exact disclosure. Distinguish relevant labs or sustained sleep/heart-rate evidence from routine corrections, duplicate cleanup, and food-entry deletion. Explain categories, recipients, details, timing, scope, review and withdrawal during setup, with separate owner authorization and recipient consent. Changes in provenance, availability, and coverage must not silently imply improved health; missing data remains unknown. Technical gaps, non-wear, disability, routine changes and privacy choices are not evidence of dishonesty or substance use.
++
++This is resistance to manipulation, not a foolproof guarantee. Review deletion rights, minimal audit retention, coercion, safe exit, false alarms, failed notifications and minimum disclosure before implementation. Revoking access must not covertly or unavoidably notify an unsafe partner. Urgent-health workflows require separate qualified review and cannot rely solely on Headspace. H0 through H6 may define and evaluate owner evidence integrity; the partner dashboard and live notifications remain deferred to H7 after H6. No live change or partner message is authorized here.
+ 
+ ### Alerts
+ 
+@@ -356,11 +364,24 @@
+ 
+ ## Milestones
+ 
+-Each milestone needs its own go-ahead. Tests stay synthetic. A local pass is not a ChatGPT session, a physical iPhone, or a sent text.
++Sequence reconciliation, November 10, 2026: [Headspace H0 through H7](../Headspace/06_BUILD_PLAN.md#milestones) is the sole authoritative delivery sequence for this work. Complete the evaluated Headspace owner dashboard and scoring release at H6 before beginning the Holding Space partner dashboard or live notifications at H7. The older M labels below preserve feature ideas and acceptance details only; they are not a competing execution order. Existing dashboard and scoped external-assistant foundation work remains valid and does not depend on a partner dashboard or paid assistant.
++
++| Retained feature reference | Placement under the authoritative sequence |
++| --- | --- |
++| M1 partner slice and M2 partner grants | Deferred to H7 after H6; owner plan configuration can support H1 through H4 without a partner implementation |
++| M3 score version and coverage | H1 and H5 through H6; no dependency on M1 or M2 |
++| M4 selected trackers | Bounded H1 through H4 context and selected routines; additional trackers remain later ideas |
++| M5 imports and primary source | H2 through H4, with verified source identity and existing import review |
++| M6 built-in owner assistant | Optional later work; not required for H1 or the external-assistant foundation |
++| M7 external assistant grants | Existing foundation and applicable H0 through H4 boundaries; no partner dashboard prerequisite |
++| M8 live alerts | H7 only, after partner permissions, separate consent and release review |
++| M9 location trial | Deferred and unscheduled; separate authorization and physical-device evidence required |
++
++The following feature slices retain their original acceptance intent subject to this mapping and the newer Headspace contracts. Tests stay synthetic until an explicitly authorized real-path check. A local pass is not a ChatGPT session, a physical iPhone, or a sent text.
+ 
+ ### M1. Plan, one partner, one shared trend
+ 
+-This is the first buildable slice. It proves a privacy boundary the app does not have yet.
++Retained partner feature slice, deferred to H7 after H6. It proves a privacy boundary the app does not have yet; it is no longer the first buildable slice.
+ 
+ Dependencies: owner authentication as it exists. No Twilio purchase. No score change. No new device.
+ 
+@@ -379,49 +400,49 @@
+ 
+ ### M2. Grant matrix and preview
+ 
+-Depends on M1.
++Within H7, depends on the retained M1 partner identity slice. This is not a prerequisite for Headspace H1 through H6.
+ 
+ Acceptance: separate controls exist for photos, scans, journals, labs, cycle, glucose, location, and alert details. Summary and entry can be granted independently where both exist. Empty categories explain that the data type is not collected yet. Revoke is immediate for every category that has a file or a query. Email stays optional.
+ 
+ ### M3. Score version and coverage
+ 
+-Depends on the current Daily State remaining intact until the new version is accepted. Can start after M1 and beside M2.
++Maps to H1 and H5 through H6. Keep current Daily State intact until an evaluated replacement is accepted. No dependency on the deferred M1 or M2 partner slices. Candidate scoring details and coverage gates are owned by [the Headspace scoring proposal](../Headspace/02_SCORING_AND_VALIDATION.md).
+ 
+ Acceptance: a new formula is versioned and does not silently replace `daily-state-1`. A missing expected log stays missing. A disabled tracker, a stale source, and a never-planned metric are labeled differently. Thin coverage is visible. Observations that are out of the score can still be read by the owner. Urgent language uses the separate screen and does not change the number by itself. Candidate thresholds from the table above are still proposals until the false-alarm review exists.
+ 
+ ### M4. Plan-selected trackers
+ 
+-Depends on M3's rule record.
++Maps to selected H1 through H4 capabilities with a versioned rule record. Do not expand the initial four-source scope to implement every retained tracker idea.
+ 
+ Acceptance: the owner turns on mood, stress, craving, sleep, activity, nutrition, spiritual practice, cycle, glucose, illness, pain, and the listed gut and breathing symptoms only where the plan includes them. Structured fields keep time, severity, duration, source, and units when supplied. Glucose can store meal context. A correction updates an extracted field without deleting the source text.
+ 
+ ### M5. Imports and one primary source
+ 
+-Depends on the existing CSV review.
++Maps to H2 through H4 and depends on existing reviewed imports and verified source identity.
+ 
+ Acceptance: a synthetic lab PDF or CSV is proposed into a destination, shown with uncertain fields and a duplicate, and saved only after confirm. Two synthetic calorie totals suggest one primary. The owner can switch it. Meal rows and daily totals stay separate. The declined source remains stored and unlabeled as the total.
+ 
+ ### M6. Owner assistant, read only
+ 
+-Depends on M2's permission check and M3's coverage language.
++Optional later built-in assistant, not a Headspace release prerequisite. Reuse applicable owner permission checks and versioned coverage language; any partner assistant still waits for H7 grants.
+ 
+ Acceptance: the assistant can draft a plan and explain a trend using only permitted metrics. A blocked category such as labs is absent from the prompt and from the answer. It cannot save a plan, a grant, or an alert rule without a separate owner confirmation. No background job.
+ 
+ ### M7. External read-only grants
+ 
+-Part of the optional external-assistant foundation. Reuse the server permission checker and M2's applicable sharing boundaries; it does not depend on building M6's in-app assistant or launching billing. Verify the existing ChatGPT connection first and add Claude support next. Claude is planned, not connected. Gemini remains an open later choice. New scopes start read only; expand to explicitly authorized writes only after the specific interface and operation are verified.
++Part of the optional external-assistant foundation. Reuse the server permission checker and applicable owner grants; deferred M2 partner grants are not a prerequisite; it does not depend on building M6's in-app assistant or launching billing. Verify the existing ChatGPT connection first and add Claude support next. Claude is planned, not connected. Gemini remains an open later choice. New scopes start read only; expand to explicitly authorized writes only after the specific interface and operation are verified.
+ 
+ Acceptance: an external token's grant is narrower than the owner's page when the owner says so. A write attempt on a new record type is rejected. No scheduled push.
+ 
+ ### M8. Live alerts
+ 
+-Depends on M1's partner identity, a purchased and registered sender, and the cooldown design. Urgent automation still waits on the review gate.
++Deferred to H7 after H6, partner identity, specific owner authorization, separate recipient consent, a verified authorized sender, and the cooldown design. Apply the [data integrity notification proposal and review gates](../Headspace/06_BUILD_PLAN.md#proposal-data-integrity-and-consent-based-notifications) before any such feature is implemented. Urgent automation still waits on its separate qualified review gate.
+ 
+ Acceptance: a synthetic sustained-change rule texts only opted-in partners, once per cooldown, with the allowed wording. STOP, a failed send, a missing delivery, and "I checked in" are distinct. Nobody acknowledging leaves a visible waiting state and does not call 911.
+ 
+ ### M9. Location trial
+ 
+-Depends on a physical iPhone. Independent of M8.
++Deferred and unscheduled. Requires separate authorization and physical iPhone evidence; it does not gate Headspace H0 through H6.
+ 
+ Acceptance: a written result says what the Home Screen web app recorded in the foreground and what it failed to record with the phone locked. The product keeps arrival and departure only if that trial supports the rule. A pocket rule that the web app cannot see is marked as needing a native companion, and it is not built inside the web app under another name.
+ 
