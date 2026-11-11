@@ -12,6 +12,7 @@ from django.utils import timezone
 from tracking.domain import METRICS, net_carbohydrates
 from tracking.models import ClinicalItem, DietEntry, NutritionTargets, SummaryRecord
 from tracking.summaries import SCHEMAS
+from tracking.summary_evidence import partition_records, summary_series_token, unambiguous_points
 
 PLAN_DAYS = 90
 DAILY_FIELDS = {
@@ -51,32 +52,59 @@ def _average(points):
     }
 
 
+def _identity(record):
+    return (record.source_system, record.device, record.entry_method, record.synthetic is True)
+
+
 def _series(records, field):
     grouped = {}
     for record in records:
-        value = _number(record.values.get(field))
+        value = _number(record.values.get(field) if isinstance(record.values, dict) else None)
         if value is None:
             continue
-        grouped.setdefault((record.source_system, record.device), []).append((record.local_date, value))
-    return [{'source': source, 'device': device, 'field': field, **stats}
-            for (source, device), points in sorted(grouped.items())
-            if (stats := _average(points))]
+        grouped.setdefault(_identity(record), []).append((record.local_date, value))
+    result, ambiguous = [], 0
+    for (source, device, method, synthetic), points in sorted(grouped.items()):
+        clean, skipped = unambiguous_points(points)
+        ambiguous += len(skipped)
+        stats = _average(clean)
+        if not stats:
+            continue
+        result.append({
+            'source': source, 'device': device, 'entry_method': method, 'synthetic': synthetic,
+            'class_label': 'test' if synthetic else 'personal', 'field': field,
+            'series_id': summary_series_token((field, source, device, method, synthetic)),
+            'ambiguous_days': len(skipped), **stats,
+        })
+    return result, ambiguous
 
 
 def _net_carb_days(records):
     grouped = {}
     for record in records:
-        carbs = _number(record.values.get('total_carbohydrates'))
-        fiber = _number(record.values.get('fiber'))
+        values = record.values if isinstance(record.values, dict) else {}
+        carbs = _number(values.get('total_carbohydrates'))
+        fiber = _number(values.get('fiber'))
         if carbs is None or fiber is None:
             continue
         net = net_carbohydrates(carbs, fiber)
         if net.get('status') != 'calculated' or net.get('value') is None:
             continue
-        grouped.setdefault((record.source_system, record.device), []).append((record.local_date, net['value']))
-    return [{'source': source, 'device': device, 'field': 'net_carbohydrates', **stats}
-            for (source, device), points in sorted(grouped.items())
-            if (stats := _average(points))]
+        grouped.setdefault(_identity(record), []).append((record.local_date, net['value']))
+    result, ambiguous = [], 0
+    for (source, device, method, synthetic), points in sorted(grouped.items()):
+        clean, skipped = unambiguous_points(points)
+        ambiguous += len(skipped)
+        stats = _average(clean)
+        if not stats:
+            continue
+        result.append({
+            'source': source, 'device': device, 'entry_method': method, 'synthetic': synthetic,
+            'class_label': 'test' if synthetic else 'personal', 'field': 'net_carbohydrates',
+            'series_id': summary_series_token(('net_carbohydrates', source, device, method, synthetic)),
+            'ambiguous_days': len(skipped), **stats,
+        })
+    return result, ambiguous
 
 
 def _clinical(owner, include_synthetic):
@@ -95,13 +123,20 @@ def fitness_plan(owner, today=None, include_synthetic=False):
     start, end = plan_window(today)
     summaries = _owned(owner, SummaryRecord, include_synthetic).filter(
         deleted_at__isnull=True, local_date__gte=start, local_date__lte=end,
-        kind__in=DAILY_FIELDS).exclude(entry_method='derived')
+        kind__in=DAILY_FIELDS).select_related('connection')
     diary = _owned(owner, DietEntry, include_synthetic).filter(
         deleted_at__isnull=True, local_date__gte=start, local_date__lte=end)
-    by_kind = {kind: [row for row in summaries if row.kind == kind] for kind in DAILY_FIELDS}
-    analysis = {field: _series(by_kind[kind], field)
-                for kind, fields in DAILY_FIELDS.items() for field in fields}
-    analysis['net_carbohydrates'] = _net_carb_days(by_kind['nutrition'])
+    eligible, evidence = partition_records(summaries)
+    by_kind = {kind: [row for row in eligible if row.kind == kind] for kind in DAILY_FIELDS}
+    analysis, ambiguous = {}, 0
+    for kind, fields in DAILY_FIELDS.items():
+        for field in fields:
+            series, skipped = _series(by_kind[kind], field)
+            analysis[field] = series
+            ambiguous += skipped
+    nets, skipped = _net_carb_days(by_kind['nutrition'])
+    analysis['net_carbohydrates'] = nets
+    evidence['ambiguous_days'] = ambiguous + skipped
     goals = saved_goals(owner)
     protein_target = next((goal['value'] for goal in goals if goal['key'] == 'protein'), None)
     return {
@@ -120,6 +155,7 @@ def fitness_plan(owner, today=None, include_synthetic=False):
                    'fiber_g': None if row.fiber_g is None else format(row.fiber_g, 'f')}
                   for row in diary],
         'clinical': _clinical(owner, include_synthetic),
+        'evidence': evidence,
         'projection': {
             'writes': False,
             'status': 'unavailable',
@@ -128,7 +164,9 @@ def fitness_plan(owner, today=None, include_synthetic=False):
         'rules': [
             'The plan uses the latest 90 local days.',
             'Days without a record are unknown, not zero.',
-            'Steps, sleep and workouts from different sources stay separate.',
+            'Steps, sleep and workouts from different sources and personal or test classes stay separate.',
+            'Unresolved imported Oura activity and recovery, and every derived row, stay out of these averages.',
+            'More than one eligible value on the same day and series stays unknown.',
             'Food calories stay separate from active and total calories burned. Burned calories are the device number, kept by source.',
             'Diet analysis uses food calories, protein, fiber and net carbs when both carbohydrate inputs exist.',
             'The diary keeps the meals. Current labs, medications and diagnoses remain when they are older than 90 days.',
@@ -178,20 +216,22 @@ def trend_lines(owner, start, end, include_synthetic):
         result = observations(owner, metric, start, end, include_synthetic)
         grouped = {}
         for row in result['rows']:
-            grouped.setdefault(row['source'], []).append(row)
+            grouped.setdefault(row.get('series_id') or row['source'], []).append(row)
         series = []
-        for source, rows in grouped.items():
+        for series_id, rows in grouped.items():
             first, last = rows[0], rows[-1]
             change = None
             if len(rows) >= 2:
                 change = format(Decimal(str(last['value'])) - Decimal(str(first['value'])), 'f')
             series.append({
-                'source': source, 'observed': len(rows), 'unit': last['unit'] or '',
+                'source': first['source'], 'series_id': series_id,
+                'observed': len(rows), 'unit': last['unit'] or '',
                 'first_date': first['date'].isoformat(), 'first': str(first['value']),
                 'last_date': last['date'].isoformat(), 'last': str(last['value']),
                 'change': change,
             })
         lines.append({'metric': metric, 'title': title, 'series': series,
+                      'truncated': result['truncated'], 'evidence': result.get('evidence') or {},
                       'href': f'/trends/?metric={metric}&start={start.isoformat()}&end={end.isoformat()}'})
     return lines
 

@@ -1,4 +1,6 @@
 """Read-only eligibility and provenance. This module does not refresh, write, or classify by stored flag alone."""
+import json
+
 from django.db.models import Q
 
 from tracking.models import SummaryRecord
@@ -105,6 +107,68 @@ def evidence_counts(records):
         'eligible_latest_date': None if eligible_latest is None else eligible_latest.isoformat(),
         'historical_latest_date': None if historical_latest is None else historical_latest.isoformat(),
     }
+
+
+HISTORY_HREF = '/summaries/provenance/'
+CALCULATION_NOTICE = 'Unresolved Oura history is not used. Missing or ambiguous evidence stays unknown.'
+
+
+def partition_records(records):
+    """Split stored rows for a calculation. History itself is not filtered here."""
+    eligible = []
+    unresolved = unavailable = 0
+    for record in records:
+        status = evidence_envelope(record)['eligibility_status']
+        if status == 'eligible':
+            eligible.append(record)
+        elif status == 'unresolved':
+            unresolved += 1
+        else:
+            unavailable += 1
+    return eligible, {
+        'eligible_count': len(eligible),
+        'unresolved_count': unresolved,
+        'unavailable_count': unavailable,
+        'history_href': HISTORY_HREF,
+        'notice': CALCULATION_NOTICE,
+    }
+
+
+def summary_series_identity(record, metric_key):
+    """Structured series identity. It is not a display label and does not join on a delimiter."""
+    values = record.values if isinstance(record.values, dict) else {}
+    return (
+        str(record.kind),
+        str(metric_key),
+        str(record.source_system),
+        str(record.device or ''),
+        str(record.entry_method),
+        'test' if record.synthetic else 'personal',
+        str(record.completeness or ''),
+        str(values.get('hrv_method', '') if metric_key == 'hrv_ms' else ''),
+        str(values.get('unit', '') if record.kind == 'health' else ''),
+        str(values.get('name', '') if record.kind == 'health' else ''),
+        str(values.get('reference_range', '') if record.kind == 'health' else ''),
+    )
+
+
+def summary_series_token(identity):
+    """Encode a series identity so display text cannot merge two different tuples."""
+    return json.dumps(list(identity), separators=(',', ':'), ensure_ascii=True)
+
+
+def unambiguous_points(points):
+    """Keep one value for a day. More than one value makes that day unknown."""
+    grouped = {}
+    for day, value in points:
+        grouped.setdefault(day, []).append(value)
+    clean, ambiguous = [], []
+    for day, values in grouped.items():
+        if len(values) == 1:
+            clean.append((day, values[0]))
+        else:
+            ambiguous.append(day)
+    return clean, ambiguous
 
 
 def unresolved_history(owner):

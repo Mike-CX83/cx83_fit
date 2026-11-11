@@ -15,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from .forms import SummaryForm, NutritionTargetForm, SummaryImportForm
 from .models import SummaryRecord, NutritionTargets
 from .summaries import SCHEMAS, display_values, put_summary, delete_summary
-from .summary_evidence import evidence_envelope, unresolved_history
+from .summary_evidence import evidence_counts, evidence_envelope, partition_records, unresolved_history
 from .views import owner_only
 from .summary_imports import HEADER as SUMMARY_HEADER, preview_summaries, confirm_summaries
 from .uploads import SummaryCSVUploadLimit
@@ -32,29 +32,47 @@ def _records(request, kind):
     return query if request.GET.get('synthetic') == '1' else query.filter(synthetic=False)
 
 
+def _single_day_rows(rows):
+    """A day with more than one row in this series is not daily evidence."""
+    by_day = defaultdict(list)
+    for row in rows:
+        by_day[row.local_date].append(row)
+    clean = [items[0] for items in by_day.values() if len(items) == 1]
+    ambiguous = sum(len(items) != 1 for items in by_day.values())
+    return clean, ambiguous
+
+
 def weekly_averages(records, kind):
-    """Only explicitly complete records; never merge sources or HRV methods."""
+    """Eligible complete values only. Sources, methods, and stored classes stay separate."""
+    eligible, _evidence = partition_records(records)
     groups = defaultdict(list)
-    for record in records:
-        key = (record.source_system, record.device, record.values.get('hrv_method', ''), record.synthetic)
+    for record in eligible:
+        values = record.values if isinstance(record.values, dict) else {}
+        key = (record.source_system, record.device, record.entry_method,
+               values.get('hrv_method', ''), record.synthetic is True)
         groups[key].append(record)
     result = []
-    for (source, device, method, synthetic), rows in groups.items():
+    for (source, device, entry_method, method, synthetic), rows in groups.items():
         averages = []
+        clean_rows, ambiguous_days = _single_day_rows(rows)
         for key, label, unit in SCHEMAS[kind]:
-            values = [Decimal(row.values[key]) for row in rows
+            values = [Decimal(row.values[key]) for row in clean_rows
                       if row.completeness == 'complete' and row.values.get(key) is not None]
             averages.append({'label': label, 'unit': unit, 'count': len(values),
                 'value': (sum(values) / len(values)).quantize(Decimal('0.01')) if values else None})
         if kind == 'nutrition':
             nets = [net_carbohydrates(row.values.get('total_carbohydrates'), row.values.get('fiber'))
-                    for row in rows if row.completeness == 'complete']
+                    for row in clean_rows if row.completeness == 'complete']
             values = [Decimal(net['value']) for net in nets if net['status'] == 'calculated']
             averages.append({'label': 'Net carbohydrates', 'unit': 'g', 'count': len(values),
                 'value': (sum(values)/len(values)).quantize(Decimal('0.01')) if values else None})
-        result.append({'source': source, 'device': device, 'method': method, 'synthetic': synthetic,
-                       'observed': len(rows), 'complete': sum(row.completeness == 'complete' for row in rows),
-                       'averages': averages})
+        result.append({'source': source, 'device': device, 'entry_method': entry_method,
+                       'method': method, 'synthetic': synthetic,
+                       'class_label': 'test' if synthetic else 'personal',
+                       'observed': len(rows), 'observed_days': len({row.local_date for row in rows}),
+                       'complete': sum(row.completeness == 'complete' for row in rows),
+                       'complete_days': sum(row.completeness == 'complete' for row in clean_rows),
+                       'ambiguous_days': ambiguous_days, 'averages': averages})
     return result
 
 
@@ -69,14 +87,16 @@ def listing(request, kind):
         raise Http404
     today = timezone.localdate()
     start = today - timedelta(days=6)
-    weekly = weekly_averages(records.filter(local_date__range=(start, today)), kind) if kind != 'health' else []
+    week_records = records.filter(local_date__range=(start, today))
+    weekly = weekly_averages(week_records, kind) if kind != 'health' else []
+    week_evidence = evidence_counts(week_records) if kind != 'health' else None
     target = NutritionTargets.objects.filter(owner=request.user).first() if kind == 'nutrition' else None
     target_values = [{'label': label, 'unit': unit, 'value': target.values.get(key) if target else None}
                      for key, label, unit in SCHEMAS['nutrition']] if kind == 'nutrition' else []
     return render(request, 'tracking/summaries.html', {
         'kind': kind, 'title': 'Lab results' if kind == 'health' else dict(SummaryRecord.KINDS)[kind], 'page': page,
         'entries': [{'record': record, 'fields': display_values(record), 'evidence': evidence_envelope(record)} for record in page],
-        'synthetic': request.GET.get('synthetic') == '1', 'weekly': weekly,
+        'synthetic': request.GET.get('synthetic') == '1', 'weekly': weekly, 'week_evidence': week_evidence,
         'week_start': start, 'week_end': today, 'target_values': target_values,
         'unresolved_history_count': unresolved_history(request.user).count(),
     })

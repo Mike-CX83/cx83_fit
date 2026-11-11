@@ -1,7 +1,10 @@
 """Daily Today screen: calorie hero, compact chips, meals by type."""
 from decimal import Decimal, InvalidOperation
 
+from django.urls import reverse
+
 from tracking.models import DietEntry, JournalEntry, Measurement, NutritionTargets, SummaryRecord
+from tracking.summary_evidence import HISTORY_HREF, CALCULATION_NOTICE, resolve_metric
 
 MEAL_ORDER = ('breakfast', 'lunch', 'dinner', 'snack')
 MEAL_LABELS = dict(DietEntry.MEALS)
@@ -48,20 +51,61 @@ def _progress(value, goal):
     return width, attention, remaining
 
 
-def _chip(key, label, unit, value, goal, *, protein=False):
-    width, attention, remaining = _progress(value, goal)
+ALTERNATIVE_LIMIT = 8
+
+
+def _alternative_view(decision, kind):
+    """Show at most eight candidates. A longer list says how many remain and where history is."""
+    full = list(decision.get('alternatives') or []) if decision.get('status') == 'selection_required' else []
+    shown = full[:ALTERNATIVE_LIMIT]
+    href = ''
+    if len(full) > ALTERNATIVE_LIMIT:
+        href = reverse('summary_list', args=[kind])
+        if any(item.get('stored_synthetic') for item in full):
+            href += '?synthetic=1'
     return {
+        'alternatives': shown,
+        'alternative_total': len(full),
+        'alternative_shown': len(shown),
+        'history_href': href,
+        'history_label': 'Activity history' if kind == 'activity' else 'Nutrition history',
+    }
+
+
+def _history_exclusion(decisions):
+    """Legacy and derived exclusions only. A null metric on an eligible row is not history."""
+    unresolved, unavailable = set(), set()
+    for decision in decisions:
+        for item in decision.get('excluded') or []:
+            if item.get('eligibility_reason') == 'unknown':
+                continue
+            summary_id = item.get('summary_id')
+            if item.get('eligibility_status') == 'unresolved':
+                unresolved.add(summary_id)
+            elif item.get('eligibility_status') == 'unavailable':
+                unavailable.add(summary_id)
+    return len(unresolved), len(unavailable)
+
+
+def _chip(key, label, unit, value, goal, *, protein=False, status='unavailable', view=None):
+    width, attention, remaining = _progress(value, goal)
+    limited = status == 'selection_required'
+    chip = {
         'key': key,
         'label': label,
         'unit': unit,
-        'value': _format(value),
+        'value': None if limited else _format(value),
         'goal': _format(goal),
-        'logged': value is not None,
-        'bar': width,
+        'logged': value is not None and not limited,
+        'bar': None if limited else width,
         'protein': protein,
         'attention': attention,
-        'remaining': _format(remaining) if remaining is not None else None,
+        'remaining': None if limited or remaining is None else _format(remaining),
+        'status': status,
+        'limitation': 'More than one record. This number stays unknown.' if limited else '',
     }
+    chip.update(view or _alternative_view({'status': status}, 'activity'))
+    return chip
 
 
 def day_metrics(owner, day, *, include_synthetic=False):
@@ -81,39 +125,54 @@ def day_metrics(owner, day, *, include_synthetic=False):
             protein = (protein or Decimal('0')) + meal.protein_g
         if meal.fiber_g is not None:
             fiber = (fiber or Decimal('0')) + meal.fiber_g
-    nutrition = scoped(SummaryRecord.objects.filter(
+    nutrition_rows = list(scoped(SummaryRecord.objects.filter(
         owner=owner, kind='nutrition', local_date=day, deleted_at__isnull=True,
-    )).first()
-    if nutrition and isinstance(nutrition.values, dict):
-        if calories is None:
-            calories = _number(nutrition.values.get('calories'))
-        if protein is None:
-            protein = _number(nutrition.values.get('protein'))
-        if fiber is None:
-            fiber = _number(nutrition.values.get('fiber'))
-    activity = scoped(SummaryRecord.objects.filter(
+    )).select_related('connection'))
+    activity_rows = list(scoped(SummaryRecord.objects.filter(
         owner=owner, kind='activity', local_date=day, deleted_at__isnull=True,
-    )).first()
-    steps = _number(activity.values.get('steps')) if activity and isinstance(activity.values, dict) else None
+    )).select_related('connection'))
+
+    def fallback(current, key):
+        if current is not None:
+            return current, {'status': 'value', 'reason': 'meals', 'value': _format(current),
+                             'alternatives': [], 'excluded': []}
+        decision = resolve_metric(nutrition_rows, key)
+        if decision['status'] == 'value':
+            return _number(decision['value']), decision
+        return None, decision
+
+    calories, calorie_decision = fallback(calories, 'calories')
+    protein, protein_decision = fallback(protein, 'protein')
+    fiber, fiber_decision = fallback(fiber, 'fiber')
+    steps_decision = resolve_metric(activity_rows, 'steps')
+    steps = _number(steps_decision['value']) if steps_decision['status'] == 'value' else None
     weight = scoped(Measurement.objects.filter(
         owner=owner, metric='weight', deleted_at__isnull=True, local_date__lte=day,
     )).order_by('-local_date', '-created_at').first()
 
-    cal_bar, cal_attention, cal_remaining = _progress(calories, goals['calories'])
+    calorie_status = calorie_decision['status']
+    calorie_limited = calorie_status == 'selection_required'
+    cal_bar, cal_attention, cal_remaining = _progress(None if calorie_limited else calories, goals['calories'])
     calories_hero = {
-        'logged': calories is not None,
-        'value': _format(calories),
+        'logged': calories is not None and not calorie_limited,
+        'value': None if calorie_limited else _format(calories),
         'goal': _format(goals['calories']),
-        'remaining': _format(cal_remaining) if cal_remaining is not None else None,
-        'remaining_positive': cal_remaining is not None and cal_remaining >= 0,
-        'bar': cal_bar,
-        'attention': cal_attention,
-        'near_goal': cal_attention,
+        'remaining': None if calorie_limited or cal_remaining is None else _format(cal_remaining),
+        'remaining_positive': cal_remaining is not None and cal_remaining >= 0 and not calorie_limited,
+        'bar': None if calorie_limited else cal_bar,
+        'attention': False if calorie_limited else cal_attention,
+        'near_goal': False if calorie_limited else cal_attention,
+        'status': calorie_status,
+        'limitation': 'More than one record. This number stays unknown.' if calorie_limited else '',
+        **_alternative_view(calorie_decision, 'nutrition'),
     }
     chips = [
-        _chip('protein', 'Protein', 'g', protein, goals['protein'], protein=True),
-        _chip('fiber', 'Fiber', 'g', fiber, goals['fiber']),
-        _chip('steps', 'Steps', '', steps, goals['steps']),
+        _chip('protein', 'Protein', 'g', protein, goals['protein'], protein=True,
+              status=protein_decision['status'], view=_alternative_view(protein_decision, 'nutrition')),
+        _chip('fiber', 'Fiber', 'g', fiber, goals['fiber'], status=fiber_decision['status'],
+              view=_alternative_view(fiber_decision, 'nutrition')),
+        _chip('steps', 'Steps', '', steps, goals['steps'], status=steps_decision['status'],
+              view=_alternative_view(steps_decision, 'activity')),
         {
             'key': 'weight',
             'label': 'Weight',
@@ -145,6 +204,8 @@ def day_metrics(owner, day, *, include_synthetic=False):
         {'key': key, 'label': MEAL_LABELS.get(key, key.title()), 'items': by_meal.get(key, [])}
         for key in MEAL_ORDER
     ]
+    unresolved_count, unavailable_count = _history_exclusion(
+        (steps_decision, calorie_decision, protein_decision, fiber_decision))
     return {
         'day': day,
         'calories': calories_hero,
@@ -154,4 +215,16 @@ def day_metrics(owner, day, *, include_synthetic=False):
         'meal_count': len(meal_rows),
         'checkin': scoped(JournalEntry.objects.filter(
             owner=owner, deleted_at__isnull=True, local_date=day)).exists(),
+        'evidence': {
+            'notice': CALCULATION_NOTICE,
+            'history_href': HISTORY_HREF,
+            'steps': steps_decision,
+            'calories': calorie_decision,
+            'protein': protein_decision,
+            'fiber': fiber_decision,
+            'selection_required': any(item['status'] == 'selection_required'
+                                      for item in (steps_decision, calorie_decision, protein_decision, fiber_decision)),
+            'unresolved_count': unresolved_count,
+            'unavailable_count': unavailable_count,
+        },
     }

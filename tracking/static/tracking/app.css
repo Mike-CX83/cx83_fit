@@ -88,6 +88,8 @@ details.fold[open]>summary::before{transform:rotate(90deg)}
 .chip-value span,.chip-value.muted{color:var(--muted);font-weight:600;font-size:.9rem}
 .chip-sub{margin:4px 0 0;font-size:.72rem;color:var(--muted);min-height:1.1em}
 .metric-chip .goal-bar{margin-top:auto;padding-top:10px}
+.calorie-hero .alternative-list,.metric-chip .alternative-list{min-width:0;max-width:100%;margin:8px 0 0;padding:0 0 0 1.1rem;overflow-wrap:anywhere}
+.calorie-hero .alternative-list li,.metric-chip .alternative-list li,.calorie-hero .alternative-list a,.metric-chip .alternative-list a{min-width:0;overflow-wrap:anywhere}
 
 .goal-bar{margin-top:12px;height:8px;border-radius:999px;background:#3A4E78;overflow:hidden}
 .goal-bar.thin{margin-top:0;height:4px}
