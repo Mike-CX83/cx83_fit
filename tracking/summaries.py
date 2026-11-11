@@ -18,7 +18,9 @@ SCHEMAS = {
                   ('total_carbohydrates', 'Total carbohydrates', 'g'), ('fat', 'Fat', 'g'), ('fiber', 'Fiber', 'g')],
     'recovery': [('sleep_minutes', 'Sleep duration', 'min'), ('hrv_ms', 'HRV', 'ms'),
                  ('resting_hr_bpm', 'Resting heart rate', 'bpm'), ('readiness', 'Source readiness score', '/100')],
-    'activity': [('steps', 'Steps', 'steps'), ('workout_minutes', 'Workout duration', 'min')],
+    'activity': [('steps', 'Steps', 'steps'), ('workout_minutes', 'Workout duration', 'min'),
+                 ('active_calories', 'Active calories burned', 'kcal'),
+                 ('total_calories', 'Total calories burned', 'kcal')],
     'health': [('value', 'Result', '')],
 }
 TEXT_FIELDS = {'nutrition': {}, 'recovery': {'hrv_method': 40},
@@ -94,15 +96,21 @@ def validate_summary(payload):
 
 
 def serialize_summary(record):
-    return {'id': str(record.id), 'kind': record.kind, 'local_date': record.local_date.isoformat(),
-            'source_timezone': record.source_timezone, 'source_system': record.source_system,
-            'source_record_id': record.source_record_id, 'entry_method': record.entry_method,
-            'device': record.device, 'completeness': record.completeness, 'values': record.values,
-            'units': {key: (record.values.get('unit') if record.kind == 'health' else unit)
-                      for key, label, unit in SCHEMAS[record.kind]},
-            'notes': record.notes, 'synthetic': record.synthetic, 'version': record.version,
-            'created_at': record.created_at.isoformat(), 'updated_at': record.updated_at.isoformat(),
-            'deleted_at': record.deleted_at.isoformat() if record.deleted_at else None}
+    payload = {'id': str(record.id), 'kind': record.kind, 'local_date': record.local_date.isoformat(),
+               'source_timezone': record.source_timezone, 'source_system': record.source_system,
+               'source_record_id': record.source_record_id, 'entry_method': record.entry_method,
+               'device': record.device, 'completeness': record.completeness, 'values': record.values,
+               'units': {key: (record.values.get('unit') if record.kind == 'health' else unit)
+                         for key, label, unit in SCHEMAS[record.kind]},
+               'notes': record.notes, 'synthetic': record.synthetic, 'version': record.version,
+               'created_at': record.created_at.isoformat(), 'updated_at': record.updated_at.isoformat(),
+               'deleted_at': record.deleted_at.isoformat() if record.deleted_at else None}
+    if record.entry_method == 'derived':
+        derivation = record.derivation if isinstance(record.derivation, dict) else None
+        payload['connection_id'] = None if record.connection_id is None else str(record.connection_id)
+        payload['derivation'] = record.derivation
+        payload['timezone_status'] = derivation.get('timezone_status', 'invalid') if derivation else 'invalid'
+    return payload
 
 
 def put_summary(owner, payload, request_id, record_id=None, expected_version=None):

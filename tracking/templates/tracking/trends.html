@@ -1,8 +1,17 @@
 {% extends 'tracking/base.html' %}{% load static %}{% block content %}
-<h1>Trends</h1><p>Recorded observations only. Sources, units, measurement locations and HRV methods stay separate. Blank dates are unknown.</p>
-<form method="get" class="panel filter-form">{{ form.as_p }}<button>Show observations</button></form>
-{% if form.cleaned_data.synthetic %}<p class="notice">Synthetic tests are included and labeled separately.</p>{% endif %}
-{% if result %}<section class="panel"><h2>{{ result.title }}</h2><p>{{ result.count }} observations. {% if result.truncated %}Limited to the first 2000 records; narrow the date range.{% endif %}</p>
+<p class="eyebrow">Progress</p>
+<h1>Trends</h1>
+<form method="get" class="panel filter-form">
+<label>{{ form.metric.label }} {{ form.metric }}</label>
+<label>{{ form.start.label }} {{ form.start }}</label>
+<label>{{ form.end.label }} {{ form.end }}</label>
+{% if form.errors %}<p class="notice">{{ form.errors }}</p>{% endif %}
+<button>Show observations</button>
+</form>
+{% if result %}<section class="panel"><h2>{{ result.title }}</h2><p class="quiet">{{ result.count }} observations.{% if result.truncated %} Limited to the first 2000 records.{% endif %}</p>
+{% if result.evidence.boundary_excluded %}<p class="quiet">A day cut off by the 2000 record limit stayed unknown.</p>{% endif %}
+{% if result.evidence.notice and result.evidence.unresolved_count or result.evidence.unavailable_count or result.evidence.ambiguous_days %}<p class="quiet">{{ result.evidence.notice }} <a href="{{ result.evidence.history_href }}">Unresolved history</a> ({{ result.evidence.unresolved_count }} unresolved, {{ result.evidence.unavailable_count }} unavailable).</p>{% endif %}
 {% if result.count %}<div class="chart-container"><canvas id="trend-chart" role="img" aria-label="{{ result.title }} observations by date. Exact values are listed below."></canvas></div>{{ result|json_script:'trend-data' }}<script src="{% static 'tracking/vendor/chart.umd.min.js' %}" defer></script><script src="{% static 'tracking/trends.js' %}" defer></script>{% else %}<p>No observations for this selection.</p>{% endif %}</section>
-<section class="panel"><h2>Recorded values</h2>{% for row in result.rows %}<article><div>{{ row.date|date:'Y-m-d' }}<p>{{ row.source }}</p></div><strong>{{ row.value }} {{ row.unit }}</strong></article>{% empty %}<p>Nothing recorded.</p>{% endfor %}</section>{% endif %}<a href="/">Back to overview</a>
+<section class="panel"><h2>Recorded values</h2>{% for row in result.rows %}<article><div>{{ row.date|date:'Y-m-d' }}<p>{{ row.source }}</p></div><strong>{{ row.value }} {{ row.unit }}</strong></article>{% empty %}<p>Nothing recorded.</p>{% endfor %}</section>{% endif %}
+<p><a href="{% url 'progress' %}">Back to Progress</a></p>
 {% endblock %}

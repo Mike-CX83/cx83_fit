@@ -93,7 +93,15 @@ CSRF_TRUSTED_ORIGINS = [s for s in os.getenv('DASHBOARD_CSRF_ORIGINS', '').split
 DATA_UPLOAD_MAX_MEMORY_SIZE = 65536
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 32
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Verification sets this to a disposable directory. The default remains the
+# checkout staticfiles path used by an explicit local collectstatic.
+_static_override = os.getenv('DASHBOARD_STATIC_ROOT', '').strip()
+if _static_override:
+    STATIC_ROOT = Path(_static_override).resolve()
+    if STATIC_ROOT == BASE_DIR or BASE_DIR in STATIC_ROOT.parents:
+        raise ImproperlyConfigured('DASHBOARD_STATIC_ROOT must stay outside the source checkout.')
+else:
+    STATIC_ROOT = BASE_DIR / 'staticfiles'
 # No email, telemetry, crash reports, request-body logs or private media route.
 EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 LOGGING = {'version': 1, 'disable_existing_loggers': True, 'handlers': {'null': {'class': 'logging.NullHandler'}}, 'root': {'handlers': ['null']}}

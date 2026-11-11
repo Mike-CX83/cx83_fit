@@ -21,11 +21,32 @@ from .reviews import serialize_review
 from .photos import photo_metadata, photo_names, photo_storage
 from .services import serialize, _owner
 from .summaries import serialize_summary
+from .summary_evidence import evidence_envelope
 from .views import owner_only
 from .responses import private_file_response
 
 MAX_EXPORT_BYTES = 512*1024*1024
 MAX_EXPORT_RECORDS = 100000
+PROVENANCE_MEMBER = 'summary-provenance-v1.json'
+RECOGNIZED_EVIDENCE_GATE = 'h0-b2'
+CURRENT_CONTRIBUTOR_KEYS = ('raw_id', 'version', 'identity_key', 'collection', 'source_record_id')
+EVER_CONTRIBUTOR_KEYS = ('raw_id', 'identity_key', 'collection', 'source_record_id')
+README_V1 = b'Private health export v1\nContains sensitive data. Store privately.\nJSON preserves exact values, nulls, provenance, corrections and tombstones. CSV text beginning with spreadsheet formula characters has a protective apostrophe. Summary values are JSON objects with schema units documented in README.md.\nDiet entries and clinical items are included. Journal JSON keeps the entry, observations, and correction field names. Deleted journal text is omitted.\nOriginal photo bytes may contain original metadata including location; normalized display images remove it. Deleted photo bytes are omitted. This export is not encrypted and is not a database backup.\n'
+README_QUALIFICATION = (
+    'Provenance qualification\n'
+    'history.json and the CSV files keep the original rows, order, values, corrections, and deletion markers.\n'
+    'summary-provenance-v1.json is additive. It joins each exported summary by its original UUID.\n'
+    'It joins each exported sobriety pattern row by its original UUID, export_index, local date, formula version, and stored class.\n'
+    'includes_synthetic filters the stored synthetic flag only. That flag does not verify personal or test attribution.\n'
+    'The default export excludes stored synthetic rows. Both stored classes of unresolved imported Oura history remain in the owner inventory at /summaries/provenance/.\n'
+    'Preserved originals are not the same as evidence eligible for calculation.\n'
+    'Derived calculations are unavailable at this checkpoint, including a current derived status.\n'
+    'Cached pattern rows are not recomputed during export and are not clinically verified.\n'
+    'A missing, malformed, unknown, or future evidence marker means historical_unvalidated.\n'
+    'The frozen h0-b2 marker means only that an evidence gate was recorded.\n'
+    'Journal scores stay journal-only and are not reclassified from summary evidence.\n'
+    'This export is private and unencrypted. It is not a database backup.\n'
+).encode()
 
 
 def csv_bytes(rows, fields):
@@ -65,6 +86,96 @@ def _owned_rows(model, owner, include_synthetic):
     if query.count() > MAX_EXPORT_RECORDS:
         raise ValueError('Export exceeds the local record limit. Use an operator backup.')
     return list(query)
+
+
+def _allowlisted(item, keys):
+    if not isinstance(item, dict) or any(key not in item for key in keys):
+        return None
+    return {key: item[key] for key in keys}
+
+
+def _lineage(record, envelope):
+    """Copy only accepted lineage fields. Validation permits extra keys, so it is not an allowlist."""
+    if envelope['derived_status'] not in {'current', 'stale', 'conflict'}:
+        return None
+    derivation = record.derivation if isinstance(record.derivation, dict) else None
+    current_raw = derivation.get('current_contributors') if derivation else None
+    ever_raw = derivation.get('contributor_identities_ever') if derivation else None
+    if (derivation is None or derivation.get('timezone_status') != 'unknown'
+            or type(derivation.get('schema_version')) is not int or type(derivation.get('recipe_version')) is not int
+            or not isinstance(current_raw, list) or not isinstance(ever_raw, list)):
+        return {'lineage_status': 'invalid'}
+    current, ever = [], []
+    for item in current_raw:
+        copied = _allowlisted(item, CURRENT_CONTRIBUTOR_KEYS)
+        if copied is None:
+            return {'lineage_status': 'invalid'}
+        current.append(copied)
+    for item in ever_raw:
+        if isinstance(item, str):
+            ever.append(item)
+            continue
+        copied = _allowlisted(item, EVER_CONTRIBUTOR_KEYS)
+        if copied is None:
+            return {'lineage_status': 'invalid'}
+        ever.append(copied)
+    return {
+        'lineage_status': 'recorded',
+        'schema_version': derivation['schema_version'],
+        'recipe_version': derivation['recipe_version'],
+        'timezone_status': 'unknown',
+        'current_contributors': current,
+        'contributor_identities_ever': ever,
+    }
+
+
+def _summary_provenance(record):
+    envelope = evidence_envelope(record)
+    item = {key: envelope[key] for key in (
+        'summary_id', 'provenance_status', 'eligibility_status', 'eligibility_reason', 'calculation',
+        'stored_synthetic', 'stored_class_verified', 'connection_id', 'derived_class', 'derived_status')}
+    item['version'] = record.version
+    item['deletion_state'] = 'deleted' if record.deleted_at is not None else 'present'
+    if envelope['provenance_status'] is None:
+        item['attribution'] = 'no_derived_claim'
+    lineage = _lineage(record, envelope)
+    if lineage is not None:
+        item['lineage'] = lineage
+    return item
+
+
+def _pattern_qualification(row, index):
+    coverage = row.coverage if isinstance(row.coverage, dict) else None
+    marker = coverage.get('evidence_gate_version') if isinstance(coverage, dict) else None
+    recognized = marker == RECOGNIZED_EVIDENCE_GATE
+    return {
+        'id': str(row.pk),
+        'export_index': index,
+        'local_date': row.local_date.isoformat(),
+        'formula_version': row.formula_version,
+        'stored_synthetic': row.synthetic is True,
+        'cache_qualification': 'evidence_gate_recorded' if recognized else 'historical_unvalidated',
+        'evidence_gate_version': RECOGNIZED_EVIDENCE_GATE if recognized else None,
+        'recomputed': False,
+        'validated_at_export': False,
+        'clinical_verification': False,
+    }
+
+
+def _provenance_document(summaries, pattern_rows, include_synthetic):
+    if len(pattern_rows) > MAX_EXPORT_RECORDS:
+        raise ValueError('Export exceeds the local record limit. Use an operator backup.')
+    return {
+        'format': 'summary-provenance-v1',
+        'selection': {
+            'includes_synthetic': include_synthetic,
+            'filter': 'stored_synthetic_flag',
+            'attribution': 'stored flags do not verify personal or test attribution',
+        },
+        'summaries': {str(row.pk): _summary_provenance(row) for row in summaries},
+        'sobriety_pattern': [_pattern_qualification(row, index) for index, row in enumerate(pattern_rows)],
+        'journal_scores': 'journal_only',
+    }
 
 
 def build_export(owner, include_synthetic=False):
@@ -174,15 +285,18 @@ def build_export(owner, include_synthetic=False):
                 'formula_version': row.formula_version, 'result': None if row.result is None else format(row.result, 'f'),
                 'coverage': row.coverage, 'synthetic': row.synthetic,
             } for row in scores]
-            pattern = SobrietyDay.objects.filter(owner=owner).order_by('local_date', 'pk')
+            pattern_query = SobrietyDay.objects.filter(owner=owner).order_by('local_date', 'pk')
             if not include_synthetic:
-                pattern = pattern.filter(synthetic=False)
+                pattern_query = pattern_query.filter(synthetic=False)
+            if pattern_query.count() > MAX_EXPORT_RECORDS:
+                raise ValueError('Export exceeds the local record limit. Use an operator backup.')
+            pattern_rows = list(pattern_query)
             data['sobriety_pattern'] = [{
                 'local_date': row.local_date.isoformat(), 'formula_version': row.formula_version,
                 'potential': row.potential, 'use_recorded': row.use_recorded, 'wear': row.wear,
                 'drivers': row.drivers, 'run_started': None if row.run_started is None else row.run_started.isoformat(),
                 'days_in_run': row.days_in_run, 'synthetic': row.synthetic,
-            } for row in pattern]
+            } for row in pattern_rows]
             data['journal_corrections'] = [{
                 'entry_id': str(row.entry_id), 'observation_id': None if row.observation_id is None else str(row.observation_id),
                 'request_id': str(row.request.request_id), 'operation': row.operation,
@@ -222,6 +336,8 @@ def build_export(owner, include_synthetic=False):
             for row in pages.iterator():
                 write('oura/pages/'+str(row.pk)+'.json', row.raw_json.encode('utf-8'))
             write('history.json', json.dumps(data, ensure_ascii=False, indent=2).encode('utf-8'))
+            provenance = _provenance_document(summaries, pattern_rows, include_synthetic)
+            write(PROVENANCE_MEMBER, json.dumps(provenance, ensure_ascii=False, indent=2, sort_keys=True).encode('utf-8'))
             write('measurements.csv', csv_bytes(data['measurements'], ['id', 'metric', 'value', 'unit', 'side', 'location',
                 'local_date', 'observed_at', 'source_timezone', 'source_system', 'source_record_id', 'entry_method',
                 'notes', 'synthetic', 'version', 'imported_at', 'deleted_at']))
@@ -234,7 +350,7 @@ def build_export(owner, include_synthetic=False):
             write('journal.csv', csv_bytes(data['journal_entries'], ['id', 'channel', 'local_date', 'occurred_at',
                 'time_precision', 'source_timezone', 'captured_at', 'body', 'processing_state', 'protocol_version',
                 'synthetic', 'version', 'deleted_at']))
-            write('README.txt', b'Private health export v1\nContains sensitive data. Store privately.\nJSON preserves exact values, nulls, provenance, corrections and tombstones. CSV text beginning with spreadsheet formula characters has a protective apostrophe. Summary values are JSON objects with schema units documented in README.md.\nDiet entries and clinical items are included. Journal JSON keeps the entry, observations, and correction field names. Deleted journal text is omitted.\nOriginal photo bytes may contain original metadata including location; normalized display images remove it. Deleted photo bytes are omitted. This export is not encrypted and is not a database backup.\n')
+            write('README.txt', README_V1 + README_QUALIFICATION)
             storage = photo_storage()
             for photo in photos:
                 if photo.deleted_at:

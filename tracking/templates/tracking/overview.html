@@ -15,16 +15,23 @@
   <p class="action-line">{% if headroom.action.href %}<a class="banner-action" href="{{ headroom.action.href }}">{{ headroom.action.label }}</a>{% else %}<span class="banner-action">{{ headroom.action.label }}</span>{% endif %}</p>
   <details class="fold">
     <summary>Details</summary>
-    <p>{{ headroom.summary }}</p>
-    <p>{{ headroom.scale }}</p>
-    {% if headroom.alternatives %}<p>Also: {% for alt in headroom.alternatives %}{% if alt.href %}<a href="{{ alt.href }}">{{ alt.label }}</a>{% else %}{{ alt.label }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
-    {% if headroom.change %}<p>{{ headroom.change }}</p>{% endif %}
-    <p>Calculated {{ headroom.updated }}.{% if headroom.missing %} Not on file: {{ headroom.missing|join:", " }}.{% endif %} {{ headroom.uncollected }}</p>
+    <p class="headroom-copy">{{ headroom.summary }}</p>
+    <p class="headroom-copy">{{ headroom.scale }}</p>
+    {% if headroom.alternatives %}<p class="headroom-copy">Also: {% for alt in headroom.alternatives %}{% if alt.href %}<a href="{{ alt.href }}">{{ alt.label }}</a>{% else %}{{ alt.label }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+    {% if headroom.change %}<p class="headroom-copy">{{ headroom.change }}</p>{% endif %}
+    <p class="headroom-copy">Calculated {{ headroom.updated }}.{% if headroom.missing %} Not on file: {{ headroom.missing|join:", " }}.{% endif %} {{ headroom.uncollected }}</p>
+    {% if headroom.limitations %}<p class="quiet headroom-copy">{% for item in headroom.limitations %}{{ item }} {% endfor %}{% if headroom.history_href %}<a href="{{ headroom.history_href }}">Unresolved history</a>.{% endif %}</p>{% endif %}
   </details>
 </section>
 
 <section class="calorie-hero{% if metrics.calories.near_goal %} is-flare{% endif %}">
-  {% if metrics.calories.logged %}
+  {% if metrics.calories.status == 'selection_required' %}
+    <p class="hero-label">Calories</p>
+    <p class="hero-value">Not used</p>
+    <p class="hero-sub">{{ metrics.calories.limitation }}</p>
+    <ul class="alternative-list">{% for alt in metrics.calories.alternatives %}<li><a href="{% url 'summary_detail' alt.kind alt.summary_id %}">{{ alt.source_system }}{% if alt.device %} · {{ alt.device }}{% endif %} · {{ alt.entry_method }} · {% if alt.stored_synthetic %}test{% else %}personal{% endif %} · {{ alt.value }}</a></li>{% endfor %}</ul>
+    {% if metrics.calories.alternative_total > metrics.calories.alternative_shown %}<p class="hero-sub">Showing {{ metrics.calories.alternative_shown }} of {{ metrics.calories.alternative_total }} alternatives. <a href="{{ metrics.calories.history_href }}">{{ metrics.calories.history_label }}</a>.</p>{% endif %}
+  {% elif metrics.calories.logged %}
     <p class="hero-label">Calories</p>
     <p class="hero-value">{{ metrics.calories.value }} <span class="hero-unit">kcal</span></p>
     {% if metrics.calories.goal %}
@@ -47,7 +54,12 @@
 {% for chip in metrics.chips %}
   <section class="metric-chip{% if chip.protein %} is-protein{% endif %}{% if chip.attention %} is-attention{% endif %}">
     <p class="chip-label">{{ chip.label }}</p>
-    {% if chip.logged %}
+    {% if chip.status == 'selection_required' %}
+      <p class="chip-value muted">—</p>
+      <p class="chip-sub">{{ chip.limitation }}</p>
+      <ul class="alternative-list">{% for alt in chip.alternatives %}<li><a href="{% url 'summary_detail' alt.kind alt.summary_id %}">{{ alt.source_system }}{% if alt.device %} · {{ alt.device }}{% endif %} · {{ alt.entry_method }} · {% if alt.stored_synthetic %}test{% else %}personal{% endif %} · {{ alt.value }}</a></li>{% endfor %}</ul>
+      {% if chip.alternative_total > chip.alternative_shown %}<p class="chip-sub">Showing {{ chip.alternative_shown }} of {{ chip.alternative_total }} alternatives. <a href="{{ chip.history_href }}">{{ chip.history_label }}</a>.</p>{% endif %}
+    {% elif chip.logged %}
       <p class="chip-value">{{ chip.value }}{% if chip.unit %} <span>{{ chip.unit }}</span>{% endif %}</p>
       <p class="chip-sub">{% if chip.goal %}/ {{ chip.goal }}{% elif chip.sub %}{{ chip.sub }}{% else %}&nbsp;{% endif %}</p>
       {% if chip.bar != None %}<div class="goal-bar thin{% if chip.protein %} protein{% endif %}{% if chip.attention %} attention{% endif %}" role="progressbar" aria-label="{{ chip.label }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ chip.bar|floatformat:0 }}"><span class="w-{{ chip.bar|floatformat:0 }}"></span></div>{% endif %}
@@ -66,6 +78,7 @@
   <a href="{% url 'progress' %}">Progress <span class="jump-mark">›</span></a>
 </nav>
 <p class="quiet checkin-line">{% if metrics.checkin %}Check-in saved{% else %}No check-in yet{% endif %} · <a href="{% url 'clinical' %}">Labs, meds, diagnoses</a></p>
+{% if metrics.evidence.unresolved_count or metrics.evidence.unavailable_count %}<p class="quiet">{{ metrics.evidence.notice }} <a href="{% url 'summary_provenance' %}">Unresolved history</a> ({{ metrics.evidence.unresolved_count }} unresolved, {{ metrics.evidence.unavailable_count }} unavailable).</p>{% endif %}
 <div class="meal-board">
 {% for section in metrics.meal_sections %}
 <section class="meal-block">
