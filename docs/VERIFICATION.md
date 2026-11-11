@@ -255,3 +255,37 @@ Read only inspection verified Traefik 3.6, watched file provider, `http`/`https`
 See `OURA_REUSE_REVIEW.md` for pinned commits, licenses, commands, source findings and audit boundaries. Independently executed upstream suites: Proscar 362 Python, 143 TypeScript and 13 Worker unit tests; Robcerda 79 Python tests. No skips in final Python runs. Proscar Python third party audit: 33 packages, zero findings or skips. Robcerda runtime lock: one unique certifi advisory duplicated in the output. Proscar npm audits contain production and development findings detailed in the review. These are separate from the dashboard's 204 tests and its dependency lock, which were not changed by the review.
 
 A synthetic probe reproduced cached records from a previous credential in Proscar's Python client. Both clients require additional work for our ingestion guarantees; the review does not approve installing either server. No new Oura adapter or policy routes were implemented during that assessment; they were implemented and verified in the later continuation recorded above. No real provider request or authorization occurred. The portal draft remains unchanged because Computer Use reported its session stopped.
+
+
+## Opt-in synthetic browser verification, November 11, 2026
+
+This checkpoint adds an explicit loopback browser runner and synthetic regressions. It changes no application code, configuration, production service or records. The default offline command remains `.venv/bin/python scripts/verify_local.py`; browser execution requires `--loopback` and explicitly supplied existing dependencies.
+
+```sh
+.venv/bin/python scripts/verify_browser.py --loopback \
+  --playwright-module /absolute/path/to/node_modules/playwright \
+  --chromium /absolute/path/to/chrome-headless-shell \
+  --node /absolute/path/to/node \
+  --timeout 300
+```
+
+Use `--output-dir` only with a fresh, nonexistent destination outside the checkout. `--anchor-date YYYY-MM-DD` pins the synthetic calendar date; `--compare /absolute/path/to/prior/summary.json` checks normalized logical outcomes against a completed prior run. Missing dependencies, denied sockets, incomplete inventories and failed cleanup are failures or blockers, not passes. Dependencies are not downloaded or installed by this runner.
+
+Verification reused Python 3.13.7, Playwright 1.65.0-alpha-2026-10-30, Chromium 157.0.8103.15 and Node 26.5.0. The existing application versions were Django 5.2.19, Uvicorn 0.54.0 and WhiteNoise 6.12.0. No installation or upgrade was performed.
+
+### Exact review-branch evidence
+
+The tested assembly was review head `542d1b68bb27498ffe0dedf18465a9378ecd563f` plus the six runner/test files. Existing application files and templates were preserved. The documentation append is separate from the executed source manifest.
+
+- Independent offline checks: 37 focused tests passed; the aggregate ran 176 tests, with 160 passed and 16 intentional opt-in socket skips, exit 0. Skips are not passes.
+- Two fresh browser runs each passed all 161 required named cases, with 225 and 226 combined checks respectively, exit 0. The second run included the supported `--compare` check against the first run. Both 1440x1000 desktop and 390x844 mobile viewports covered authentication boundaries and the scoped journal, integration, export and layout workflows. This uses desktop Chromium with a mobile viewport, not a physical phone.
+- Five SQL snapshots preserved all six protected tables throughout; five write tables were unchanged through reads and preview. Existing write rows remained unchanged. Authorized synthetic workflows added exactly four journal entries, four observations, eight corrections, two holding messages and ten receipts. Linked-row, saved-false-before-deletion and narrowly scoped cache checks passed. Independent snapshot comparison supplemented the runner's semantic checks; it was not a separately reimplemented semantic oracle.
+- Real conditional-cache checks observed the discovered stylesheet URL returning an old-validator 304, a changed 200 carrying the old validator, a new-validator 304 and a cold unvalidated 200. Computed fixture color changed to the current stylesheet color. Navigation used no request mocks, forced reload or cache clearing. Native Chromium sandboxing stayed enabled. This is scoped cache evidence, not a general proxy-log ordering guarantee.
+- The first and second runs respectively recorded 39 and 38 owned child identities; all recorded identities and nine owned groups per run were absent after cleanup. Both owned ports per run were closed. Each direct runner was safely reaped and signal handlers restored. All 200 tested source-file hashes remained unchanged in each run, and each run removed its seven disposable runtime directories. Retained summaries and evidence were deliberate outputs.
+- Repeatability passed: the second fresh exact-review-branch run passed the supported `--compare` check. Independent normalized comparison also matched ordered case names/results excluding the comparison assertion, fixture outcomes, inventory, source preservation and cleanup across the two runs.
+
+The accepted development snapshot was tested separately: 37 focused tests and 414 aggregate tests, with 396 passed and 18 intentional socket skips; its fresh browser run passed 161 cases and 225 combined checks. These are not the review-branch test counts. Earlier development-source assertion/startup/timeout injections and real SIGINT/SIGTERM interruption proofs established nonzero exits, owned cleanup and source preservation for that earlier runner checkpoint. They were not rerun as interruption proofs on this final review-branch assembly.
+
+### Limits
+
+This is local synthetic verification, not deployment, activation, real-provider acceptance, hosted ChatGPT/MCP acceptance, physical iPhone/Safari testing or a complete accessibility audit. No real health data, external provider calls, production migration or connection change was involved. Browser dependencies remain explicitly supplied existing copies; durable provisioning is a separate decision. The target process's standard input remains closed, and negative child exit statuses use shell eight-bit encoding. At this checkpoint the review commit had no GitHub check runs, status contexts or returned pull-request workflow runs; absent CI is not green CI. The draft PR remains unmerged, and main and production are unchanged by this checkpoint.
